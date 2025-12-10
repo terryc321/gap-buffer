@@ -68,12 +68,28 @@ the 'file' is essentially empty .
 ```
 
 ### buffer
-buffer contents is "asdfpeter"
 
 ```ascii
 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 ... (LEN-1)
 a s d f ^-----------------------------------------^  p  e  t  e  r
 ^-- start of file                                                ^--- end of file
+
+in emacs if we save the file containing "asdfpeter" in asdfpeter.txt
+
+let us do a canonical hexdump of the text file
+
+> hexdump -C asdfpeter.txt
+
+-------------- decimal ----------------------------------- ascii rep -------
+00000000  61 73 64 66 70 65 74 65  72 0a                    |asdfpeter.|
+------------------------------------------------------------------------
+-bytes --  1  2 3  4  5  6  7  8   9  10  
+
+> wc --words --lines --bytes asdfpeter.txt 
+ 1  1 10 asdfpeter.txt
+
+the file is 10 bytes long , contains 1 word and 
+
 ```
 
 smallest gap buffer we can have is one byte gap buffer ? - thats ready for text
