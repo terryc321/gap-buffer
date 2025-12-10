@@ -7,19 +7,74 @@ in essence there is no 'text' in the buffer
 # optimal size gap buffer 
 
 how big should the gap buffer be ?
-
+0 bytes initially ?
+1000 bytes ?
+4k bytes ? 
 
 common lisp array 0 to length-1
 the perenial problem of the off by errors abound !
 
 unicode characters - multibyte characters - now not just a single ascii character
 
+
+## forget unicode - simplify 
 lets forget unicode for now.
 
+## forget binary files - simplify
 lets forget binary code for now - just visible ascii characters ?
 
-suppose entire memory of text editor consists of this 
+suppose entire memory of text editor consists of this
+
+## disk
+
+disk refers to anything not in memory where the contents of the buffer may possibly be saved for future retrieval
+
+## file vs buffer
+
+file is permanent on disk or solid state.
+
+buffer is in memory and volatile to loss power.
+
+buffer is a model of the contents of the text editor.
+
+we can use model view controller approach to 'look' at various parts of the buffer.
+
+we could have a view looks from start of buffer.
+
+we could have a view looks from end of buffer.
+
+we can have a view looks from middle of buffer.
+
+all on the same 'buffer' model
+
+## undo redo
+
+very likely we will want to make undo / redo - so operations should be recorded and
+it be possible to undo whatever changes were made
+
+within scope as it is not generally possible to control the outside world , namely the disk
+
+### empty buffer
+for an arbitrary size buffer LEN in an array - typically c code 0 to LEN-1
+
+we can see a number of things .  the start and end of the 'file' is the same location.
+the 'file' is essentially empty . 
+
+```ascii
 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 ... (LEN-1)
+^----------------------------^ gap buffer
+^-- start of file
+^-- end of file
+```
+
+### buffer
+buffer contents is "asdfpeter"
+
+```ascii
+0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 ... (LEN-1)
+a s d f ^-----------------------------------------^  p  e  t  e  r
+^-- start of file                                                ^--- end of file
+```
 
 smallest gap buffer we can have is one byte gap buffer ? - thats ready for text
 
