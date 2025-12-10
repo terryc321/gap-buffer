@@ -1,5 +1,9 @@
 # gap-buffer
 
+# clipboard 
+
+copy paste . especially large copy paste from firefox perhaps advent of code large web page data.
+
 # the initial buffer
 initial buffer in a text editor will be empty - the entire file is the gap-buffer 
 in essence there is no 'text' in the buffer
@@ -125,26 +129,58 @@ a b c d e ^---------^ gap buffer
 ^-- start of file
         ^-- end of file
 
+expansion of gap buffer does not go into the undo history since it does not affect the text model as such        
+
+```
+
+### in the middle
+
+situation where caret is after e but before f 
+
+```ascii
+visually  abcde|fghijk
+
+
+0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 ... (LEN-1)
+a b c d e ^---------^   f  g  h  i  j  k
+            gap buffer                 ^
+^-- start of file                      |
+                                       |-- end of file
+```
+
+### constraint on gap buffer start & end 
+
+lets suppose we never let gap buffer start and end be the same point . if it ever were to occur then we should immediately grow the gap buffer . 
+
+### 
+
+```ascii
+
+0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 ... (LEN-1)
+a b c d e ^---------^   f  g  h  i  j  k
+            gap buffer                 ^
+^-- start of file                      |
+                                       |-- end of file
 ```
 
 
 smallest gap buffer we can have is one byte gap buffer ? - thats ready for text
 
-deleting a character -
+### deleting a character -
 enlarge gap buffer by one - simply 
 
-inserting a character -
+### inserting a character -
 consume one byte - theirby reducing gap buffer size by one
 
-moving down one line -
+### moving down one line -
 
-moving up one line -
+### moving up one line -
 
-forward one character - 
+### forward one character - 
 
-backward one character - 
+### backward one character - 
 
-caret -
+## caret 
 open file in buffer the caret is at the start of 'text'
 the gap buffer is before all the 'text'
 
@@ -154,7 +190,7 @@ the character in 'text' at byte offset 0
 CARET   {FIRST-BYTE}  VIRTUAL-CARET-POS  {SECOND-BYTE}  ANOTHER-CARET-POS 
 ^                   ^                                   ^
 
-column numbering -
+## line and column numbering 
 column = 1
 
 row numbering -
@@ -167,13 +203,22 @@ row blue ?
 
 when moving caret or cursor around - keep 'view' caret within visible region
 
-extra large files
+# extra large files
 
-position of open/closing braces - aka paredit
+# paredit 
+
+matching brackets , parenthessis , position of open/closing braces - aka paredit
+
+# keyboard input modes
 
 keyboard input/output - control keys alt super modifiers -
 how many keys can be detected by being down
 can we use a window manager that simply does not reference
+
+# colorised display
+
+colourisor using seperate threads 
+
 
 
 
