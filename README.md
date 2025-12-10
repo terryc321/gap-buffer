@@ -80,7 +80,7 @@ let us do a canonical hexdump of the text file
 
 > hexdump -C asdfpeter.txt
 
--------------- decimal ----------------------------------- ascii rep -------
+-------------- decimal byte values  ----------------------- ascii rep ----
 00000000  61 73 64 66 70 65 74 65  72 0a                    |asdfpeter.|
 ------------------------------------------------------------------------
 -bytes --  1  2 3  4  5  6  7  8   9  10  
@@ -91,6 +91,42 @@ let us do a canonical hexdump of the text file
 the file is 10 bytes long , contains 1 word and 
 
 ```
+
+### insertion
+
+```ascii
+suppose we have a gap buffer of 5 characters initially empty , type 'a b c' ,
+we notice the end of file marker moves to point at the last character.
+characters a b c have been entered into the array, the gap buffer size has decreased
+
+0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 ... (LEN-1)
+^---------^ gap buffer
+^-- start of file
+^-- end of file
+
+0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 ... (LEN-1)
+a b c ^---^ gap buffer
+^-- start of file
+    ^-- end of file
+
+if we enter 'de' , we again notice the end of file marker moves along.
+the gap buffer is now squanshed to byte offset 5 .
+both start and end of gap buffer point to the same offset.
+
+0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 ... (LEN-1)
+a b c d e ^^ gap buffer
+^-- start of file
+        ^-- end of file
+
+lets now expand the gap buffer to another five bytes
+
+0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 ... (LEN-1)
+a b c d e ^---------^ gap buffer
+^-- start of file
+        ^-- end of file
+
+```
+
 
 smallest gap buffer we can have is one byte gap buffer ? - thats ready for text
 
