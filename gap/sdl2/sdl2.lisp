@@ -21,9 +21,9 @@
 ;; width = 10 height = 22 advance = 10 
 (defparameter *glyph-string* " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~")
 
-(defmacro glyph-char (ch)
+(defun glyph-char (ch)
   "Return 0-based index of a printable ASCII character."
-  `(- (char-code ,ch) 32))
+  (- (char-code ch) 32))
 
 ;; jetbrains mono
 ;; Width/height/advance = 10/22/10 (JetBrains Mono 20pt monospace)."
@@ -179,7 +179,8 @@ uses *glyph-advance* to keep track of position across screen x direction*"
   `(progn
      (insert buf ,ch)
      ;;(format t "user pressed letter ~a key!~%" ,ch)
-     (update-text)))
+     ;;(update-text)
+     ))
 
 (defmacro cheap-keytest(ch ch2)
     (let ((sym (intern (string-upcase (format nil "SCANCODE-~a" ch)) "KEYWORD")))
@@ -191,15 +192,15 @@ uses *glyph-advance* to keep track of position across screen x direction*"
 	   (t ;; shift key pressed
 	    (cheap-scancode-body ,ch2))))))
 			
-			
 
-(defun update-text ()
-  ;; Render a string at position (50,50)
-(loop for ch across "Hello, SDL2!"
-      for x = 50 then (+ x 10)
-      do (sdl2:render-copy renderer glyph-texture
-                           :source-rect (glyph-rect ch)
-                           :dest-rect (sdl2:make-rect :x x :y 50 :w 10 :h 22)))
+;; (defun update-text ()
+;;   ;; Render a string at position (50,50)
+;; (loop for ch across "Hello, SDL2!"
+;;       for x = 50 then (+ x 10)
+;;       do (sdl2:render-copy renderer glyph-texture
+;;                            :source-rect (glyph-rect ch)
+;;                            :dest-rect (sdl2:make-rect :x x :y 50 :w 10 :h 22))))
+
 
 
 ;; hello-text is a sdl2 texture
@@ -207,8 +208,8 @@ uses *glyph-advance* to keep track of position across screen x direction*"
   (let ((buf (make-buffer))
 	(buf-len 6)
 	(buf-str nil)
-	(my-render nil)
-	(dest-rect nil)
+	;;(my-render nil)
+	;;(dest-rect nil)
 	(hello-tex nil)
 	(glyph-tex nil) ;; characters in one big texture	
 	(font nil))
@@ -224,7 +225,7 @@ uses *glyph-advance* to keep track of position across screen x direction*"
 	(sdl2-ttf:init)
 	(sdl2:with-window (the-window :title "Basic Font Example" :w 1024 :h 768 :flags '(:shown))
 	  (sdl2:with-renderer (my-renderer the-window :flags '(:accelerated))
-	    (setq my-render my-renderer)
+	    ;; (setq my-render my-renderer)
 
 	    ;;(setq font (sdl2-ttf:open-font (asdf:system-relative-pathname 'sdl2-ttf-examples "examples/PROBE_10PX_OTF.otf") 20))
 	    ;;(setq font (sdl2-ttf:open-font "/usr/share/fonts/fonts-go/Go-Mono.ttf" 20))
@@ -236,30 +237,35 @@ uses *glyph-advance* to keep track of position across screen x direction*"
 									      255  ;; green
 									      255  ;; blue
 									      0))
-					 (texture (sdl2:create-texture-from-surface my-render
+					 (texture (sdl2:create-texture-from-surface my-renderer
 										    surface)))
 				    (sdl2:free-surface surface)
 				    texture))
 		 
-	    (update-text)	  
+	    ;;(update-text)	  
             (flet ((text-renderer (renderer)
-		     (setq buf-str (buffer-contents buf))
-		     (setq buf-len (length buf-str))
-		     (loop for ch across buf-str
-			   for x = 50 then (+ x 10)
-		     do (sdl2:render-copy renderer glyph-tex
-					  :source-rect (glyph-rect ch)
-					  :dest-rect (sdl2:make-rect x 50
-								     *glyph-width*
-								     *glyph-height*)))
-		       
-                     ;; (sdl2:render-copy renderer
-                     ;;                   hello-tex
-                     ;;                   :source-rect (cffi:null-pointer)
-                     ;;                   :dest-rect dest-rect)
+
+		     ;; show all characters in texture -- ie the whole texture glyph-tex
+		     (sdl2:render-copy renderer glyph-tex
+                             :source-rect (cffi:null-pointer)
+                             :dest-rect (sdl2:make-rect 50 50
+							(* (+ 1(length *glyph-string*)) (* 2 *glyph-width*))
+							(* 2 *glyph-height*)))
 		     
-		     );; text-renderer procedure
-                   (clear-renderer (renderer)
+		     (let* ((buf-str (buffer-contents buf))
+			    (buf-len (length buf-str))
+			    (x 50)
+			    (y 100))
+		       (loop for i from 0 to (+ -1 buf-len) do
+			 (let ((ch (char buf-str i)))
+			   (sdl2:render-copy renderer glyph-tex
+                             :source-rect (sdl2:make-rect (* 12 (- (char-code ch) 32)) 0 (+ 2 *glyph-width*) (+ 4 *glyph-height*))
+                             :dest-rect (sdl2:make-rect x y
+							(* 2 *glyph-width*)
+							(* 2 *glyph-height*)))
+			   (incf x (* 2 *glyph-advance*))))))
+		   ;; 
+		   (clear-renderer (renderer)
 		     ;; background colour in red green blue
                      (sdl2:set-render-draw-color renderer 0 50 50 255)
                      (sdl2:render-clear renderer)))
@@ -565,17 +571,19 @@ uses *glyph-advance* to keep track of position across screen x direction*"
 		   ((sdl2:scancode= scancode :scancode-backspace)
 		    (backspace-delete buf)
 		    ;;(format t "user pressed backspace key~%")
-		    (update-text)
+		    ;;(update-text)
 		    )
 		   ((sdl2:scancode= scancode :scancode-delete)
 		    ;;(format t "user pressed delete key~%")
 		    (delete-delete buf)
-		    (update-text))
+		    ;;(update-text)
+		    )
 
 		   ((sdl2:scancode= scancode :scancode-space)
 		    ;;(format t "user pressed space key~%")
 		    (insert buf #\space)
-		    (update-text))
+		    ;;(update-text)
+		    )
 
 		   ((sdl2:scancode= scancode :scancode-escape)
 		    (sdl2:push-event :quit))
@@ -599,10 +607,10 @@ uses *glyph-advance* to keep track of position across screen x direction*"
 		    (sdl2:push-event :quit))
 		   (t nil))))
 		(:idle ()
-                       (clear-renderer my-render)
+                       (clear-renderer my-renderer)
 		       (when (> buf-len 0)		      
-			 (text-renderer my-render))
-                       (sdl2:render-present my-render))
+			 (text-renderer my-renderer))
+                       (sdl2:render-present my-renderer))
 		(:quit ()
                        (when (> (sdl2-ttf:was-init) 0)
 			 (sdl2-ttf:close-font font)
