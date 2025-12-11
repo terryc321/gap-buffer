@@ -6,6 +6,17 @@
   :license  "Specify license here"
   :version "0.0.1"
   :serial t
-  :depends-on (#:uiop #:fiveam)
+  :depends-on (#:uiop #:fiveam #:sdl2 #:sdl2-ttf #:alexandria)
   :components ((:file "package")
                (:file "gap")))
+
+
+;; (ql:quickload "uiop") ;; directory stuff
+;; (ql:quickload "fiveam") ;; testing suite
+
+;; ;; realistically if we want to actually use this stuff we need some sort of viewer
+;; (ql:quickload "sdl2")
+;; (ql:quickload "sdl2-ttf")
+;; (ql:quickload "alexandria")
+
+

@@ -1,7 +1,6 @@
 ;;;; gap.lisp
 
-(ql:quickload "uiop") ;; directory stuff
-(ql:quickload "fiveam") ;; testing suite
+
 ;; (load "gap.lisp")
 ;; to do tests ... (run-tests)
 ;;
@@ -10,7 +9,7 @@
 
 (in-package #:gap)
 
-(uiop:add-package-local-nickname :tt :fiveam )
+;; (uiop:add-package-local-nickname :tt :fiveam )
 
 
 
