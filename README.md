@@ -245,7 +245,20 @@ similar to forward character. we try to decrement begin of gap buffer. if succee
   (tt:run!))
 ```
 
+# THiS is THE End ... 
 
+# SDL2 
+
+common lisp sdl2 ffi using quicklisp seems to work out of the box
+
+## key repeat
+
+waits for a key up down means does not do a key repeat , so have to tweak that , 
+determine
+
+## key combinations
+
+accurate control of keyboard whatever sdl2 or however gui implemented is paramount to a good editor experience
 
 
 
