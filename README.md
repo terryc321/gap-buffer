@@ -70,26 +70,45 @@ a ^------------------^
 here we enlarge the gap buffer.  for simplicity we will just double the size of the array container itself.   
 
 - double size array container
-```lisp
-(defun expand-gap-buffer(buf)  
-  (let* ((newsize (* 2 (length (buf-vec buf))))
-	 (tmp (make-buffer newsize)))
-    ;; copy live chars across
-    (let ((j 0))
-      (loop for i from 0 to (+ -1 (length (buf-vec buf))) do
-	(let ((ch (aref (buf-vec buf) i)))
-	  (when (not (null ch))
-	    (setf (aref (buf-vec tmp) j) ch)
-	    (incf j))))
-      ;; set gap buffer markers at end of tmp array
-      (setf (buf-from tmp) j)
-      (setf (buf-to tmp) (+ -1 (length (buf-vec tmp))))      
-```
-
 - copy all live chars over to new array container
 - figure out where gap buffer is to go and how long it is
 - copy live chars to end of gap buffer
 - nullify gap buffer contents
+
+
+```lisp
+
+(defun expand-gap-buffer(buf)  
+  (let* ((newsize (* 2 (length (buf-vec buf))))
+	 (tmp (make-buffer newsize)))
+    ;; copy chars between (zero) to (old-gap-buffer-start - 1) across
+    (let ((j 0))
+      (loop for i from 0 to (+ -1 (buf-from buf)) do
+	(let ((ch (aref (buf-vec buf) i)))
+	  (when (not (null ch))
+	    (setf (aref (buf-vec tmp) j) ch)
+	    (incf j))))
+      ;; copy down from right to left
+      (let ((k (+ -1 (length (buf-vec tmp)))))
+	(loop for n from (+ -1 (length (buf-vec buf))) downto (+ 1 (buf-to buf)) do
+	  (let ((ch (aref (buf-vec buf) n)))
+	    (when (not (null ch))
+	      (setf (aref (buf-vec tmp) k) ch)
+	      (decf k)))))      
+      ;; set gap buffer markers at end of tmp array
+      (setf (buf-from tmp) (buf-from buf))
+      (setf (buf-to tmp) k)
+      ;; nullify gap buffer
+      (loop for r from (buf-from tmp) to (buf-to tmp) do
+        (setf (aref (buf-vec tmp) r) nil))
+      ;; now take over buf
+      ;; since buf is a structure we can mutate it inplace
+      ;; any future reference to buf will reflect the new mutated version
+      (setf (buf-from buf) (buf-from tmp))
+      (setf (buf-to buf) (buf-to tmp))
+      (setf (buf-vec buf) (buf-vec tmp))
+      t)))
+```
 
 we copy any non nil characters across in order . place gap buffer at end to end of array , keeping in mind off by one error on end is `LEN-1` . 
 then compute where the gap buffer should `sit` by 

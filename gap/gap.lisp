@@ -51,38 +51,37 @@
 (defun expand-gap-buffer(buf)  
   (let* ((newsize (* 2 (length (buf-vec buf))))
 	 (tmp (make-buffer newsize)))
-    ;; copy live chars across
+    ;; copy chars between (zero) to (old-gap-buffer-start - 1) across
     (let ((j 0))
-      (loop for i from 0 to (+ -1 (length (buf-vec buf))) do
+      (loop for i from 0 to (+ -1 (buf-from buf)) do
 	(let ((ch (aref (buf-vec buf) i)))
 	  (when (not (null ch))
 	    (setf (aref (buf-vec tmp) j) ch)
 	    (incf j))))
-      (setf (buf-from tmp) j)
-      (setf (buf-to tmp) (+ -1 (length (buf-vec tmp))))
-      ;; original gap buffer location ? now at j
-      
-      
-    t))
+      ;; copy down from right to left
+      (let ((k (+ -1 (length (buf-vec tmp)))))
+	(loop for n from (+ -1 (length (buf-vec buf))) downto (+ 1 (buf-to buf)) do
+	  (let ((ch (aref (buf-vec buf) n)))
+	    (when (not (null ch))
+	      (setf (aref (buf-vec tmp) k) ch)
+	      (decf k)))))      
+      ;; set gap buffer markers at end of tmp array
+      (setf (buf-from tmp) (buf-from buf))
+      (setf (buf-to tmp) k)
+
+      ;; nullify gap buffer
+      (loop for r from (buf-from tmp) to (buf-to tmp) do
+	(setf (aref (buf-vec tmp) r) nil))
+
+      ;; now take over buf
+      ;; since buf is a structure we can mutate it inplace
+      ;; any future reference to buf will reflect the new mutated version
+      (setf (buf-from buf) (buf-from tmp))
+      (setf (buf-to buf) (buf-to tmp))
+      (setf (buf-vec buf) (buf-vec tmp))
+      t)))
 
     
-    ;; (loop for i from 0 to (+ -1 (length (buf-vec buf))) do
-    ;;   (let ((ch (aref (buf-vec buf) i)))
-    ;; 	(when (not (null ch))
-    ;; 	  (format t "copying char ~a from ~a -> ~a ~%" ch i i)
-    ;; 	  (setf (aref (buf-vec tmp) j) ch)
-    ;; 	  (incf j))))
-    ;; ;; assign vectors 
-    ;; (setf (buf-vec buf) (buf-vec tmp))
-    ;; ;;
-    ;; (format t "inserting char ~a at ~a " ch j)
-    ;; (setf (aref (buf-vec tmp) j) ch)
-    ;; (setf (buf-from buf) (+ j 1))
-    ;; (setf (buf-to buf) (+ -1 newsize))
-    ;; ;;
-    ;; (format t "buffer contents {~A} ~%" (buffer-contents buf))
-    ;; ))
-
 
     
 
