@@ -1,10 +1,80 @@
 # SDL2 
 
-common lisp sdl2 ffi using quicklisp seems to work out of the box
+common lisp sdl2 is installed where
 
 ```lisp
+(ql:where-is-system "sdl2")
+=> #P"/home/terry/quicklisp/dists/quicklisp/software/cl-sdl2-20231021-git/"
+```
+
+little bit easier we can ask `slime` directly where a particular procedure is by pressing `alt-.`
+
+# basic-example
+
+entry point to a simple text editor using our gap buffer and sdl2 libraries through cl-sdl2 foreign function interface
+
+```lisp
+(sdl2:with-event-loop (:method :poll)
+        (:keydown (:keysym keysym)
+        (let ((scancode (sdl2:scancode-value keysym))
+                (sym (sdl2:sym-value keysym))
+                (mod-value (sdl2:mod-value keysym)))
+        (cond
+                ((sdl2:scancode= scancode :scancode-w) (format t "~a~%" "WALK"))
+                ((sdl2:scancode= scancode :scancode-s) (sdl2:show-cursor))
+                ((sdl2:scancode= scancode :scancode-h) (sdl2:hide-cursor)))
+        (format t "Key sym: ~a, code: ~a, mod: ~a~%"            sym
+                scancode
+                mod-value)))
 
 ```
+
+## keyboard modifiers
+
+
+```c
+/* https://wiki.libsdl.org/SDL3/SDL_Keymod */
+/* 
+#define SDL_KMOD_LCTRL  0x0040u /**< the left Ctrl (Control) key is down. */
+    this means left control key modifier has hex value 40 
+	the u just means unsigned value (0 to infinity ...)
+*/
+#define SDL_KMOD_NONE   0x0000u /**< no modifier is applicable. */
+#define SDL_KMOD_LSHIFT 0x0001u /**< the left Shift key is down. */
+#define SDL_KMOD_RSHIFT 0x0002u /**< the right Shift key is down. */
+#define SDL_KMOD_LEVEL5 0x0004u /**< the Level 5 Shift key is down. */
+#define SDL_KMOD_LCTRL  0x0040u /**< the left Ctrl (Control) key is down. */
+#define SDL_KMOD_RCTRL  0x0080u /**< the right Ctrl (Control) key is down. */
+#define SDL_KMOD_LALT   0x0100u /**< the left Alt key is down. */
+#define SDL_KMOD_RALT   0x0200u /**< the right Alt key is down. */
+#define SDL_KMOD_LGUI   0x0400u /**< the left GUI key (often the Windows key) is down. */
+#define SDL_KMOD_RGUI   0x0800u /**< the right GUI key (often the Windows key) is down. */
+#define SDL_KMOD_NUM    0x1000u /**< the Num Lock key (may be located on an extended keypad) is down. */
+#define SDL_KMOD_CAPS   0x2000u /**< the Caps Lock key is down. */
+#define SDL_KMOD_MODE   0x4000u /**< the !AltGr key is down. */
+#define SDL_KMOD_SCROLL 0x8000u /**< the Scroll Lock key is down. */
+#define SDL_KMOD_CTRL   (SDL_KMOD_LCTRL | SDL_KMOD_RCTRL)   /**< Any Ctrl key is down. */
+#define SDL_KMOD_SHIFT  (SDL_KMOD_LSHIFT | SDL_KMOD_RSHIFT) /**< Any Shift key is down. */
+#define SDL_KMOD_ALT    (SDL_KMOD_LALT | SDL_KMOD_RALT)     /**< Any Alt key is down. */
+#define SDL_KMOD_GUI    (SDL_KMOD_LGUI | SDL_KMOD_RGUI)     /**< Any GUI key is down. */
+```
+
+we can now check if the `left control key` is pressed or not
+
+```lisp
+(format t "left shift key pressed => ~a" (logand #x1 mod-value))
+(format t "right shift key pressed => ~a" (logand #x2 mod-value))
+;; compose them together for any
+(format t "any shift key (left or right) key pressed => ~a" (logand (logior #x1 #x2) mod-value))
+```
+
+```lisp
+(format t "left control key pressed => ~a" (logand #x40 mod-value))
+(format t "right control key pressed => ~a" (logand #x80 mod-value))
+(format t "any control key (left or right) pressed => ~a" (logand (logior #x40 #x80) mod-value))
+```
+
+
 
 
 ## key repeat

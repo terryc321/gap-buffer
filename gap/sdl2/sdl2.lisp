@@ -141,6 +141,7 @@
      (format t "user pressed letter ~a key!~%" ,ch)
      (update-text)))
 
+
 		 
 
 ;; hello-text is a sdl2 texture
@@ -168,107 +169,139 @@
 	       (when (not (zerop (length (buffer-contents buf))))
 		 ;; not sure about size of texture rectangle
 		 ;; we only render to screen if buffer-contents is non zero length 
-	       (setq hello-text (let* ((surface (sdl2-ttf:render-text-solid font
-                                                                       buf-str
-                                                                       255
-                                                                       255
-                                                                       255
-                                                                       0))
-                                  (texture (sdl2:create-texture-from-surface my-render
-                                                                             surface)))
-                             (sdl2:free-surface surface)
-				  texture))
-	       (setq dest-rect (sdl2:make-rect (round (- 150 (/ (sdl2:texture-width hello-text) 2.0)))
-					       (round (- 150 (/ (sdl2:texture-height hello-text) 2.0)))
-					       (sdl2:texture-width hello-text)
-					       (sdl2:texture-height hello-text))))))
+		 (setq hello-text (let* ((surface (sdl2-ttf:render-text-solid font
+									      buf-str
+									      255
+									      255
+									      255
+									      0))
+					 (texture (sdl2:create-texture-from-surface my-render
+										    surface)))
+				    (sdl2:free-surface surface)
+				    texture))
+		 (setq dest-rect (sdl2:make-rect (round (- 150 (/ (sdl2:texture-width hello-text) 2.0)))
+						 (round (- 150 (/ (sdl2:texture-height hello-text) 2.0)))
+						 (sdl2:texture-width hello-text)
+						 (sdl2:texture-height hello-text))))))
       
-  (sdl2:with-init (:everything)
-    ;;Technically speaking sdl2-ttf can be initialized without sdl2 
-    (sdl2-ttf:init)
-    (sdl2:with-window (the-window :title "Basic Font Example" :w 1024 :h 768 :flags '(:shown))
-      (sdl2:with-renderer (my-renderer the-window :flags '(:accelerated))
-	(setq my-render my-renderer)
-        (setq font (sdl2-ttf:open-font (asdf:system-relative-pathname 'sdl2-ttf-examples "examples/PROBE_10PX_OTF.otf") 20))
-	  (update-text)	  
-          (flet ((text-renderer (renderer)
-                   (sdl2:render-copy renderer
-                                     hello-text
-                                     :source-rect (cffi:null-pointer)
-                                     :dest-rect dest-rect))
-                 (clear-renderer (renderer)
-                   (sdl2:set-render-draw-color renderer 0 0 0 255)
-                   (sdl2:render-clear renderer)))
-            (sdl2:with-event-loop (:method :poll)
-	      (:keyup
-               (:keysym keysym)
-               (cond
-		 ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-escape)
-		  (sdl2:push-event :quit))
-		 ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-left)
-		  (format t "user pressed left arrow key!~%")
-		  (backward-char buf))
-		 ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-right)
-		  (format t "user pressed right arrow key!~%")
-		  (forward-char buf))
-		 ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-backspace)
-		  (backspace-delete buf)
-		  (format t "user pressed backspace key~%")
-		  (update-text)
-		  )
-		 ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-delete)
-		  (format t "user pressed delete key~%")
-		  (delete-delete buf)
-		  (update-text))
+      (sdl2:with-init (:everything)
+	;;Technically speaking sdl2-ttf can be initialized without sdl2 
+	(sdl2-ttf:init)
+	(sdl2:with-window (the-window :title "Basic Font Example" :w 1024 :h 768 :flags '(:shown))
+	  (sdl2:with-renderer (my-renderer the-window :flags '(:accelerated))
+	    (setq my-render my-renderer)
+            (setq font (sdl2-ttf:open-font (asdf:system-relative-pathname 'sdl2-ttf-examples "examples/PROBE_10PX_OTF.otf") 20))
+	    (update-text)	  
+            (flet ((text-renderer (renderer)
+                     (sdl2:render-copy renderer
+                                       hello-text
+                                       :source-rect (cffi:null-pointer)
+                                       :dest-rect dest-rect))
+                   (clear-renderer (renderer)
+                     (sdl2:set-render-draw-color renderer 0 0 0 255)
+                     (sdl2:render-clear renderer)))
+              (sdl2:with-event-loop (:method :poll)
+	            (:keydown (:keysym keysym)
+                      (let ((scancode (sdl2:scancode-value keysym))
+                            (sym (sdl2:sym-value keysym))
+                            (mod-value (sdl2:mod-value keysym)))
+                        (cond
+                          ((sdl2:scancode= scancode :scancode-w) (format t "~a~%" "WALK"))
+                          ((sdl2:scancode= scancode :scancode-s) (sdl2:show-cursor))
+                          ((sdl2:scancode= scancode :scancode-h) (sdl2:hide-cursor)))
+                        (format t "Key sym: ~a, code: ~a, mod: ~a~%"
+                                sym
+                                scancode
+                                mod-value)
+			;; SDL_KMOD_LSHIFT 0x0001u   left shift = #x1
+			(format t "Left shift pressed = ~a ~%" (logand #x1 mod-value))
+			;; SDL_KMOD_RSHIFT 0x0001u   left shift = #x1			
+			(format t "Right shift pressed = ~a ~%" (logand #x1 mod-value))
+			
 
-		 ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-space)
-		  (format t "user pressed space key~%")
-		  (insert buf #\space)
-		  (update-text))
-		 
-		 ;; ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-a)
-		 ;;  (insert buf #\a)
-		 ;;  (format t "user pressed letter a key!~%")
-		 ;;  (update-text))
-		 
-		 ;;(cheap-scancode #\a)
-		 ((cheap-scancode-head #\a) (cheap-scancode-body #\a))
-		 ((cheap-scancode-head #\b) (cheap-scancode-body #\b))
-		 ((cheap-scancode-head #\c) (cheap-scancode-body #\c))
-		 ((cheap-scancode-head #\d) (cheap-scancode-body #\d))
-		 ((cheap-scancode-head #\e) (cheap-scancode-body #\e))
-		 ((cheap-scancode-head #\f) (cheap-scancode-body #\f))
-		 ((cheap-scancode-head #\g) (cheap-scancode-body #\g))
-		 ((cheap-scancode-head #\h) (cheap-scancode-body #\h))
-		 ((cheap-scancode-head #\i) (cheap-scancode-body #\i))
-		 ((cheap-scancode-head #\j) (cheap-scancode-body #\j))
-		 ((cheap-scancode-head #\k) (cheap-scancode-body #\k))
-		 ((cheap-scancode-head #\l) (cheap-scancode-body #\l))
-		 ((cheap-scancode-head #\m) (cheap-scancode-body #\m))
-		 ((cheap-scancode-head #\n) (cheap-scancode-body #\n))
-		 ((cheap-scancode-head #\o) (cheap-scancode-body #\o))
-		 ((cheap-scancode-head #\p) (cheap-scancode-body #\p))
-		 ((cheap-scancode-head #\q) (cheap-scancode-body #\q))
-		 ((cheap-scancode-head #\r) (cheap-scancode-body #\r))
-		 ((cheap-scancode-head #\s) (cheap-scancode-body #\s))
-		 ((cheap-scancode-head #\t) (cheap-scancode-body #\t))
-		 ((cheap-scancode-head #\u) (cheap-scancode-body #\u))
-		 ((cheap-scancode-head #\v) (cheap-scancode-body #\v))
-		 ((cheap-scancode-head #\w) (cheap-scancode-body #\w))
-		 ((cheap-scancode-head #\x) (cheap-scancode-body #\x))
-		 ((cheap-scancode-head #\y) (cheap-scancode-body #\y))
-		 ((cheap-scancode-head #\z) (cheap-scancode-body #\z))
-		 
-		 (t nil)));;keyup
-               (:idle ()
-                      (clear-renderer my-render)
-		      (when (> buf-len 0)		      
-			(text-renderer my-render))
-                      (sdl2:render-present my-render))
-               (:quit ()
-                      (when (> (sdl2-ttf:was-init) 0)
-			(sdl2-ttf:close-font font)
-			(sdl2:destroy-texture hello-text)
-			(sdl2-ttf:quit))
-                      t)))))))))
+			))
+		(:keyup
+		 (:keysym keysym)
+		 (cond
+		   ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-escape)
+		    (sdl2:push-event :quit))
+		   ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-left)
+		    (format t "user pressed left arrow key!~%")
+		    (backward-char buf))
+		   ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-right)
+		    (format t "user pressed right arrow key!~%")
+		    (forward-char buf))
+		   ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-backspace)
+		    (backspace-delete buf)
+		    (format t "user pressed backspace key~%")
+		    (update-text)
+		    )
+		   ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-delete)
+		    (format t "user pressed delete key~%")
+		    (delete-delete buf)
+		    (update-text))
 
+		   ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-space)
+		    (format t "user pressed space key~%")
+		    (insert buf #\space)
+		    (update-text))
+		   
+		   ;; ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-a)
+		   ;;  (insert buf #\a)
+		   ;;  (format t "user pressed letter a key!~%")
+		   ;;  (update-text))
+		   
+		   ;;(cheap-scancode #\a)
+		   ((cheap-scancode-head #\a) (cheap-scancode-body #\a))
+		   ((cheap-scancode-head #\b) (cheap-scancode-body #\b))
+		   ((cheap-scancode-head #\c) (cheap-scancode-body #\c))
+		   ((cheap-scancode-head #\d) (cheap-scancode-body #\d))
+		   ((cheap-scancode-head #\e) (cheap-scancode-body #\e))
+		   ((cheap-scancode-head #\f) (cheap-scancode-body #\f))
+		   ((cheap-scancode-head #\g) (cheap-scancode-body #\g))
+		   ((cheap-scancode-head #\h) (cheap-scancode-body #\h))
+		   ((cheap-scancode-head #\i) (cheap-scancode-body #\i))
+		   ((cheap-scancode-head #\j) (cheap-scancode-body #\j))
+		   ((cheap-scancode-head #\k) (cheap-scancode-body #\k))
+		   ((cheap-scancode-head #\l) (cheap-scancode-body #\l))
+		   ((cheap-scancode-head #\m) (cheap-scancode-body #\m))
+		   ((cheap-scancode-head #\n) (cheap-scancode-body #\n))
+		   ((cheap-scancode-head #\o) (cheap-scancode-body #\o))
+		   ((cheap-scancode-head #\p) (cheap-scancode-body #\p))
+		   ((cheap-scancode-head #\q) (cheap-scancode-body #\q))
+		   ((cheap-scancode-head #\r) (cheap-scancode-body #\r))
+		   ((cheap-scancode-head #\s) (cheap-scancode-body #\s))
+		   ((cheap-scancode-head #\t) (cheap-scancode-body #\t))
+		   ((cheap-scancode-head #\u) (cheap-scancode-body #\u))
+		   ((cheap-scancode-head #\v) (cheap-scancode-body #\v))
+		   ((cheap-scancode-head #\w) (cheap-scancode-body #\w))
+		   ((cheap-scancode-head #\x) (cheap-scancode-body #\x))
+		   ((cheap-scancode-head #\y) (cheap-scancode-body #\y))
+		   ((cheap-scancode-head #\z) (cheap-scancode-body #\z))
+		   
+		   (t nil)));;keyup
+		(:idle ()
+                       (clear-renderer my-render)
+		       (when (> buf-len 0)		      
+			 (text-renderer my-render))
+                       (sdl2:render-present my-render))
+		(:quit ()
+                       (when (> (sdl2-ttf:was-init) 0)
+			 (sdl2-ttf:close-font font)
+			 (sdl2:destroy-texture hello-text)
+			 (sdl2-ttf:quit))
+                       t)))))))))
+
+
+;; ai slop -- 
+;; (:keydown (:keysym keysym)
+;; 	  (let ((mods (sdl2:mod-value keysym)))
+;; 	    (when (plusp (logand mods (sdl2:+kmod-lshift+)))
+;; 	      (format t "Left shift is held~%"))
+;; 	    (when (plusp (logand mods (sdl2:+kmod-rctrl+)))
+;; 	      (format t "Right ctrl is held~%"))
+;; 	    ;; Example: check for Ctrl + A
+;; 	    (when (and (sdl2:scancode= (sdl2:scancode-value keysym) :scancode-a)
+;; 		       (plusp (logand mods (logior (sdl2:+kmod-lctrl+)
+;; 						   (sdl2:+kmod-rctrl+)))))
+;; 	      (format t "CTRL+A detected!~%"))))	      
