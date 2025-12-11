@@ -15,6 +15,46 @@
 
 (in-package :gap)
 
+
+;;glyph string derived from all characters from 32 to 126
+;;(coerce (nreverse (let ((xs nil)) (loop for i from 32 to 126 do (setq xs (cons (code-char i) xs))) xs)) 'string)
+;; width = 10 height = 22 advance = 10 
+(defparameter *glyph-string* " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~")
+
+(defmacro glyph-char (ch)
+  "Return 0-based index of a printable ASCII character."
+  `(- (char-code ,ch) 32))
+
+;; jetbrains mono
+;; Width/height/advance = 10/22/10 (JetBrains Mono 20pt monospace)."
+(defparameter *glyph-width* 10)
+(defparameter *glyph-height* 22)
+(defparameter *glyph-advance* 10)
+
+(defun glyph-rect (ch)
+  "Return an SDL_Rect for a character in a fixed-width glyph atlas."
+  (let ((x (* *glyph-width* (glyph-char ch)))
+	(y 0)
+	(wid *glyph-width*)
+	(hgt *glyph-height*))
+    (sdl2:make-rect x y wid hgt)))
+
+
+
+(defun draw-text (renderer text x y texture)
+  "Draw a string using the pre-rendered glyph texture.
+uses *glyph-advance* to keep track of position across screen x direction*"
+  (loop for ch across text do
+       (when (and (>= (char-code ch) 32) (<= (char-code ch) 126))
+         (let ((src (glyph-rect ch))
+               (dst (sdl2:make-rect x y *glyph-width* *glyph-height*)))
+           (sdl2:render-copy renderer texture
+                             :source-rect src
+                             :dest-rect dst)
+           (incf x *glyph-advance*)))))
+
+
+
 (defun test-render-clear (renderer)
   (sdl2:set-render-draw-color renderer 0 0 0 255)
   (sdl2:render-clear renderer))
@@ -152,7 +192,15 @@
 	    (cheap-scancode-body ,ch2))))))
 			
 			
-		 
+
+(defun update-text ()
+  ;; Render a string at position (50,50)
+(loop for ch across "Hello, SDL2!"
+      for x = 50 then (+ x 10)
+      do (sdl2:render-copy renderer glyph-texture
+                           :source-rect (glyph-rect ch)
+                           :dest-rect (sdl2:make-rect :x x :y 50 :w 10 :h 22)))
+
 
 ;; hello-text is a sdl2 texture
 (defun basic-example ()
@@ -161,7 +209,8 @@
 	(buf-str nil)
 	(my-render nil)
 	(dest-rect nil)
-	(hello-text nil)	
+	(hello-tex nil)
+	(glyph-tex nil) ;; characters in one big texture	
 	(font nil))
     (insert buf #\t)
     (insert buf #\e)
@@ -170,37 +219,6 @@
     (insert buf #\y)
     
     
-    (labels ((update-text ()
-	       ;;(format t "buffer contents ~a ~%" (buffer-contents buf))
-	       (setq buf-str (buffer-contents buf))
-	       (setq buf-len (length buf-str))
-	       (when hello-text (sdl2:destroy-texture hello-text))
-	       (setq hello-text nil)
-	       (when (not (zerop (length (buffer-contents buf))))
-		 ;; not sure about size of texture rectangle
-		 ;; we only render to screen if buffer-contents is non zero length 
-		 (setq hello-text (let* ((surface (sdl2-ttf:render-text-solid font
-									      buf-str
-									      255  ;; red
-									      255  ;; green
-									      255  ;; blue
-									      0))
-					 (texture (sdl2:create-texture-from-surface my-render
-										    surface)))
-				    (sdl2:free-surface surface)
-				    texture))
-		 ;; where the hello-text is going to be written
-		 ;; (setq dest-rect (sdl2:make-rect (round (- 150 (/ (sdl2:texture-width hello-text) 2.0)))
-		 ;; 				 (round (- 150 (/ (sdl2:texture-height hello-text) 2.0)))
-		 ;; 				 (sdl2:texture-width hello-text)
-		 ;; 				 (sdl2:texture-height hello-text)))
-		 (setq dest-rect (sdl2:make-rect sdl2-ffi:+null+
-						 sdl2-ffi:+null+
-						 (sdl2:texture-width hello-text)
-						 (sdl2:texture-height hello-text)))
-		 
-		 )))
-      
       (sdl2:with-init (:everything)
 	;;Technically speaking sdl2-ttf can be initialized without sdl2 
 	(sdl2-ttf:init)
@@ -211,12 +229,36 @@
 	    ;;(setq font (sdl2-ttf:open-font (asdf:system-relative-pathname 'sdl2-ttf-examples "examples/PROBE_10PX_OTF.otf") 20))
 	    ;;(setq font (sdl2-ttf:open-font "/usr/share/fonts/fonts-go/Go-Mono.ttf" 20))
 	    (setq font (sdl2-ttf:open-font "/usr/share/fonts/truetype/jetbrains-mono/fonts/ttf/JetBrainsMono-Regular.ttf" 20))
+	    ;; create  glyph texture
+	    (setq glyph-tex (let* ((surface (sdl2-ttf:render-text-solid font
+									      *glyph-string*
+									      255  ;; red
+									      255  ;; green
+									      255  ;; blue
+									      0))
+					 (texture (sdl2:create-texture-from-surface my-render
+										    surface)))
+				    (sdl2:free-surface surface)
+				    texture))
+		 
 	    (update-text)	  
             (flet ((text-renderer (renderer)
-                     (sdl2:render-copy renderer
-                                       hello-text
-                                       :source-rect (cffi:null-pointer)
-                                       :dest-rect dest-rect))
+		     (setq buf-str (buffer-contents buf))
+		     (setq buf-len (length buf-str))
+		     (loop for ch across buf-str
+			   for x = 50 then (+ x 10)
+		     do (sdl2:render-copy renderer glyph-tex
+					  :source-rect (glyph-rect ch)
+					  :dest-rect (sdl2:make-rect x 50
+								     *glyph-width*
+								     *glyph-height*)))
+		       
+                     ;; (sdl2:render-copy renderer
+                     ;;                   hello-tex
+                     ;;                   :source-rect (cffi:null-pointer)
+                     ;;                   :dest-rect dest-rect)
+		     
+		     );; text-renderer procedure
                    (clear-renderer (renderer)
 		     ;; background colour in red green blue
                      (sdl2:set-render-draw-color renderer 0 50 50 255)
@@ -564,9 +606,9 @@
 		(:quit ()
                        (when (> (sdl2-ttf:was-init) 0)
 			 (sdl2-ttf:close-font font)
-			 (sdl2:destroy-texture hello-text)
+			 (sdl2:destroy-texture hello-tex)
 			 (sdl2-ttf:quit))
-                       t)))))))))
+                       t))))))))
 
 
 ;; to step around bordeaux-threads pain points

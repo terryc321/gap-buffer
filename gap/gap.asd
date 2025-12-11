@@ -15,9 +15,12 @@
   :components ((:file "package") ;; package.lisp
                (:file "gap") ;; gap.lisp
 	       (:file "sdl2/sdl2") ;; sdl2/sdl2.lisp
+               ;; glyph text atlas removed due to ai slop
 	       ))
 
 
+;; ai slop 
+;; (:file "glyph-atlas/text-atlas") ;; glyph-atlas/text-atlas.lisp
 ;; (ql:quickload "uiop") ;; directory stuff
 ;; (ql:quickload "fiveam") ;; testing suite
 
