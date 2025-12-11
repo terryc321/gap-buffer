@@ -122,12 +122,12 @@
 	       ;; 					 (sdl2:texture-height hello-text)))
 
 
-(defmacro cheap-scancode (ch)
-  (let ((sym (intern (string-upcase (format nil "SCANCODE-~a" ch)) "KEYWORD")))
-    `((sdl2:scancode= (sdl2:scancode-value keysym) ,sym)
-      (insert buf ,ch)
-      (format t "user pressed letter ~a key!~%" ,ch)
-      (update-text))))
+;; (defmacro cheap-scancode (ch)
+;;   (let ((sym (intern (string-upcase (format nil "SCANCODE-~a" ch)) "KEYWORD")))
+;;     `((sdl2:scancode= (sdl2:scancode-value keysym) ,sym)
+;;       (insert buf ,ch)
+;;       (format t "user pressed letter ~a key!~%" ,ch)
+;;       (update-text))))
 
 ;;(cheap-scancode #\a)
 
@@ -209,22 +209,20 @@
                           ((sdl2:scancode= scancode :scancode-w) (format t "~a~%" "WALK"))
                           ((sdl2:scancode= scancode :scancode-s) (sdl2:show-cursor))
                           ((sdl2:scancode= scancode :scancode-h) (sdl2:hide-cursor)))
+			
                         (format t "Key sym: ~a, code: ~a, mod: ~a~%"
                                 sym
                                 scancode
                                 mod-value)
-			;; SDL_KMOD_LSHIFT 0x0001u   left shift = #x1
-			(format t "Left shift pressed = ~a ~%" (logand #x1 mod-value))
-			;; SDL_KMOD_RSHIFT 0x0001u   left shift = #x1			
-			(format t "Right shift pressed = ~a ~%" (logand #x1 mod-value))
-			
+			(format t "left shift key pressed => ~a~%" (logand #x1 mod-value))
+			(format t "right shift key pressed => ~a~%" (logand #x2 mod-value))
+			(format t "any shift key (left or right) key pressed => ~a~%" (logand (logior #x1 #x2) mod-value))
 
-			))
-		(:keyup
-		 (:keysym keysym)
-		 (cond
-		   ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-escape)
-		    (sdl2:push-event :quit))
+			(format t "left control key pressed => ~a~%" (logand #x40 mod-value))
+			(format t "right control key pressed => ~a~%" (logand #x80 mod-value))
+			(format t "any control key (left or right) pressed => ~a~%" (logand (logior #x40 #x80) mod-value))
+
+		   (cond
 		   ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-left)
 		    (format t "user pressed left arrow key!~%")
 		    (backward-char buf))
@@ -245,40 +243,21 @@
 		    (format t "user pressed space key~%")
 		    (insert buf #\space)
 		    (update-text))
+
+		   ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-escape)
+		    (sdl2:push-event :quit))
 		   
 		   ;; ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-a)
 		   ;;  (insert buf #\a)
 		   ;;  (format t "user pressed letter a key!~%")
 		   ;;  (update-text))
-		   
-		   ;;(cheap-scancode #\a)
-		   ((cheap-scancode-head #\a) (cheap-scancode-body #\a))
-		   ((cheap-scancode-head #\b) (cheap-scancode-body #\b))
-		   ((cheap-scancode-head #\c) (cheap-scancode-body #\c))
-		   ((cheap-scancode-head #\d) (cheap-scancode-body #\d))
-		   ((cheap-scancode-head #\e) (cheap-scancode-body #\e))
-		   ((cheap-scancode-head #\f) (cheap-scancode-body #\f))
-		   ((cheap-scancode-head #\g) (cheap-scancode-body #\g))
-		   ((cheap-scancode-head #\h) (cheap-scancode-body #\h))
-		   ((cheap-scancode-head #\i) (cheap-scancode-body #\i))
-		   ((cheap-scancode-head #\j) (cheap-scancode-body #\j))
-		   ((cheap-scancode-head #\k) (cheap-scancode-body #\k))
-		   ((cheap-scancode-head #\l) (cheap-scancode-body #\l))
-		   ((cheap-scancode-head #\m) (cheap-scancode-body #\m))
-		   ((cheap-scancode-head #\n) (cheap-scancode-body #\n))
-		   ((cheap-scancode-head #\o) (cheap-scancode-body #\o))
-		   ((cheap-scancode-head #\p) (cheap-scancode-body #\p))
-		   ((cheap-scancode-head #\q) (cheap-scancode-body #\q))
-		   ((cheap-scancode-head #\r) (cheap-scancode-body #\r))
-		   ((cheap-scancode-head #\s) (cheap-scancode-body #\s))
-		   ((cheap-scancode-head #\t) (cheap-scancode-body #\t))
-		   ((cheap-scancode-head #\u) (cheap-scancode-body #\u))
-		   ((cheap-scancode-head #\v) (cheap-scancode-body #\v))
-		   ((cheap-scancode-head #\w) (cheap-scancode-body #\w))
-		   ((cheap-scancode-head #\x) (cheap-scancode-body #\x))
-		   ((cheap-scancode-head #\y) (cheap-scancode-body #\y))
-		   ((cheap-scancode-head #\z) (cheap-scancode-body #\z))
-		   
+			)))
+			  
+			
+		(:keyup	 (:keysym keysym)
+		 (cond
+		   ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-escape)
+		    (sdl2:push-event :quit))
 		   (t nil)));;keyup
 		(:idle ()
                        (clear-renderer my-render)

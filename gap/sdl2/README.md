@@ -64,7 +64,6 @@ we can now check if the `left control key` is pressed or not
 ```lisp
 (format t "left shift key pressed => ~a" (logand #x1 mod-value))
 (format t "right shift key pressed => ~a" (logand #x2 mod-value))
-;; compose them together for any
 (format t "any shift key (left or right) key pressed => ~a" (logand (logior #x1 #x2) mod-value))
 ```
 
