@@ -138,10 +138,20 @@
 (defmacro cheap-scancode-body (ch)
   `(progn
      (insert buf ,ch)
-     (format t "user pressed letter ~a key!~%" ,ch)
+     ;;(format t "user pressed letter ~a key!~%" ,ch)
      (update-text)))
 
-
+(defmacro cheap-keytest(ch ch2)
+    (let ((sym (intern (string-upcase (format nil "SCANCODE-~a" ch)) "KEYWORD")))
+      `(when (sdl2:scancode= scancode ,sym)
+	 (cond
+	   ((zerop (logand (logior #x1 #x2) mod-value))
+	    ;; no shift key pressed
+	    (cheap-scancode-body ,ch))
+	   (t ;; shift key pressed
+	    (cheap-scancode-body ,ch2))))))
+			
+			
 		 
 
 ;; hello-text is a sdl2 texture
@@ -171,9 +181,9 @@
 		 ;; we only render to screen if buffer-contents is non zero length 
 		 (setq hello-text (let* ((surface (sdl2-ttf:render-text-solid font
 									      buf-str
-									      255
-									      255
-									      255
+									      255 ;; red
+									      0   ;; green
+									      0   ;; blue
 									      0))
 					 (texture (sdl2:create-texture-from-surface my-render
 										    surface)))
@@ -190,7 +200,9 @@
 	(sdl2:with-window (the-window :title "Basic Font Example" :w 1024 :h 768 :flags '(:shown))
 	  (sdl2:with-renderer (my-renderer the-window :flags '(:accelerated))
 	    (setq my-render my-renderer)
-            (setq font (sdl2-ttf:open-font (asdf:system-relative-pathname 'sdl2-ttf-examples "examples/PROBE_10PX_OTF.otf") 20))
+
+	    ;;(setq font (sdl2-ttf:open-font (asdf:system-relative-pathname 'sdl2-ttf-examples "examples/PROBE_10PX_OTF.otf") 20))
+	    (setq font (sdl2-ttf:open-font "/usr/share/fonts/fonts-go/Go-Mono.ttf" 20))
 	    (update-text)	  
             (flet ((text-renderer (renderer)
                      (sdl2:render-copy renderer
@@ -209,66 +221,332 @@
                           ((sdl2:scancode= scancode :scancode-w) (format t "~a~%" "WALK"))
                           ((sdl2:scancode= scancode :scancode-s) (sdl2:show-cursor))
                           ((sdl2:scancode= scancode :scancode-h) (sdl2:hide-cursor))
-			  ((cheap-scancode-head #\a)
-			   (cond
-			     ((zerop (logand (logior #x1 #x2) mod-value))
-			      ;; no shift key pressed
-			      (cheap-scancode-body #\a))
-			     (t ;; shift key pressed
-			      (cheap-scancode-body #\A))))
-			  
-			)
+			  ;; fUNCTION kEYSs - woop woop 
+			  ((sdl2:scancode= scancode :scancode-f1)
+			   (format t "FORMULA ONEE ........ FORMULA ONE  brrrUUUMMMM...~%"))
+			  )
+
+			;; ;; TODO TODO 
+			;; (when (sdl2:scancode= scancode :scancode-a)
+			;;   (cond
+			;;     ((zerop (logand (logior #x1 #x2) mod-value))
+			;;       ;; no shift key pressed
+			;;       (cheap-scancode-body #\a))
+			;;     (t ;; shift key pressed
+			;;      (cheap-scancode-body #\A))))
+			(cheap-keytest #\a #\A)
+			(cheap-keytest #\b #\B)
+			(cheap-keytest #\c #\C)
+			(cheap-keytest #\d #\D)
+			(cheap-keytest #\e #\E)
+			(cheap-keytest #\f #\F)
+			(cheap-keytest #\g #\G)
+			(cheap-keytest #\h #\H)
+			(cheap-keytest #\i #\I)
+			(cheap-keytest #\j #\J)
+			(cheap-keytest #\k #\K)
+			(cheap-keytest #\l #\L)
+			(cheap-keytest #\m #\M)
+			(cheap-keytest #\n #\N)
+			(cheap-keytest #\o #\O)
+			(cheap-keytest #\p #\P)
+			(cheap-keytest #\q #\Q)
+			(cheap-keytest #\r #\R)
+			(cheap-keytest #\s #\S)
+			(cheap-keytest #\t #\T)
+			(cheap-keytest #\u #\U)
+			(cheap-keytest #\v #\V)
+			(cheap-keytest #\w #\W)
+			(cheap-keytest #\x #\X)
+			(cheap-keytest #\y #\Y)
+			(cheap-keytest #\z #\Z)
+
+			(cheap-keytest #\0 #\])
+			(cheap-keytest #\1 #\!)
+			(cheap-keytest #\2 #\@)
+			(cheap-keytest #\3 #\#)
+			(cheap-keytest #\4 #\$)
+			(cheap-keytest #\5 #\%)
+			(cheap-keytest #\6 #\^)
+			(cheap-keytest #\7 #\&)
+			(cheap-keytest #\8 #\*)
+			(cheap-keytest #\9 #\[)
+
+			
+			(when (sdl2:scancode= scancode :scancode-leftbracket)
+			  (cond
+			    ((zerop (logand (logior #x1 #x2) mod-value)) ;;no shift key
+			     (cheap-scancode-body #\( ))
+			    (t ;; shift key pressed
+			     (cheap-scancode-body #\{ ))))
+
+			(when (sdl2:scancode= scancode :scancode-rightbracket)
+			  (cond
+			    ((zerop (logand (logior #x1 #x2) mod-value)) ;;no shift key
+			     (cheap-scancode-body #\) ))
+			    (t ;; shift key pressed
+			     (cheap-scancode-body #\} ))))
+
+			(when (sdl2:scancode= scancode :scancode-apostrophe)
+			  (cond
+			    ((zerop (logand (logior #x1 #x2) mod-value)) ;;no shift key
+			     (cheap-scancode-body #\' ))
+			    (t ;; shift key pressed
+			     (cheap-scancode-body #\" ))))
+
+			(when (sdl2:scancode= scancode :scancode-semicolon)
+			  (cond
+			    ((zerop (logand (logior #x1 #x2) mod-value)) ;;no shift key
+			     (cheap-scancode-body #\; ))
+			    (t ;; shift key pressed
+			     (cheap-scancode-body #\: ))))
+			
+			(when (sdl2:scancode= scancode :scancode-period)
+			  (cond
+			    ((zerop (logand (logior #x1 #x2) mod-value)) ;;no shift key
+			     (cheap-scancode-body #\. ))
+			    (t ;; shift key pressed
+			     (cheap-scancode-body #\> ))))
+			
+			(when (sdl2:scancode= scancode :scancode-comma)
+			  (cond
+			    ((zerop (logand (logior #x1 #x2) mod-value)) ;;no shift key
+			     (cheap-scancode-body #\, ))
+			    (t ;; shift key pressed
+			     (cheap-scancode-body #\< ))))
+			
+			(when (sdl2:scancode= scancode :scancode-slash)
+			  (cond
+			    ((zerop (logand (logior #x1 #x2) mod-value)) ;;no shift key
+			     (cheap-scancode-body #\/ ))
+			    (t ;; shift key pressed
+			     (cheap-scancode-body #\? ))))
+
+			(when (sdl2:scancode= scancode :scancode-backslash)
+			  (cond
+			    ((zerop (logand (logior #x1 #x2) mod-value)) ;;no shift key
+			     (cheap-scancode-body #\\ ))
+			    (t ;; shift key pressed
+			     (cheap-scancode-body #\| ))))
+
+			(when (sdl2:scancode= scancode :scancode-equals)
+			  (cond
+			    ((zerop (logand (logior #x1 #x2) mod-value)) ;;no shift key
+			     (cheap-scancode-body #\= ))
+			    (t ;; shift key pressed
+			     (cheap-scancode-body #\+ ))))
+
+			(when (sdl2:scancode= scancode :scancode-minus)
+			  (cond
+			    ((zerop (logand (logior #x1 #x2) mod-value)) ;;no shift key
+			     (cheap-scancode-body #\- ))
+			    (t ;; shift key pressed
+			     (cheap-scancode-body #\_ ))))
+
+			(when (sdl2:scancode= scancode :scancode-grave)
+			  (cond
+			    ((zerop (logand (logior #x1 #x2) mod-value)) ;;no shift key
+			     (cheap-scancode-body #\` ))
+			    (t ;; shift key pressed
+			     (cheap-scancode-body #\~ ))))
+
+			(when (sdl2:scancode= scancode :scancode-printscreen)
+			  (format t "printscreen pressed~%"))
+
+
+			(when (sdl2:scancode= scancode :scancode-numlockclear)
+			  (format t "numlockclear pressed~%")
+			  )
+
+			(when (sdl2:scancode= scancode :scancode-kp-divide)
+			  (format t "keypad divide pressed~%")
+			  )
+
+			(when (sdl2:scancode= scancode :scancode-kp-multiply)
+			  (format t "keypad  multiply pressed~%")
+			  )
+
+			(when (sdl2:scancode= scancode :scancode-kp-minus)
+			  (format t "keypad minus pressed~%")
+			  )
+
+			(when (sdl2:scancode= scancode :scancode-kp-plus)
+			  (format t "keypad plus pressed~%")
+			  )
+
+			(when (sdl2:scancode= scancode :scancode-kp-enter)
+			  (format t "keypad enter pressed~%")
+			  )
+
+
+			(when (sdl2:scancode= scancode :scancode-up)
+			  (format t "up arrow pressed~%")
+			  )
+
+			(when (sdl2:scancode= scancode :scancode-down)
+			  (format t "down arrow pressed~%")
+			  )
+
+			(when (sdl2:scancode= scancode :scancode-left)
+			  (format t "left arrow pressed~%")
+			  )
+
+			(when (sdl2:scancode= scancode :scancode-right)
+			  (format t "right arrow pressed~%")
+			  )
+
+			(when (sdl2:scancode= scancode :scancode-kp-0)
+			  (format t "keypad 0 pressed ~%")
+			  )
+
+			(when (sdl2:scancode= scancode :scancode-kp-1)
+			  (format t "keypad 1 pressed~%")
+			  )
+
+			(when (sdl2:scancode= scancode :scancode-kp-2)
+			  (format t "keypad 2 pressed~%")
+			  )
+
+			(when (sdl2:scancode= scancode :scancode-kp-3)
+			  (format t "keypad 3 pressed~%")
+			  )
+
+			(when (sdl2:scancode= scancode :scancode-kp-4)
+			  (format t "keypad 4 pressed~%")
+			  )
+
+			(when (sdl2:scancode= scancode :scancode-kp-5)
+			  (format t "keypad 5 pressed ~%")
+			  )
+
+			(when (sdl2:scancode= scancode :scancode-kp-6)
+			  (format t "keypad 6 pressed~%")
+			  )
+
+			(when (sdl2:scancode= scancode :scancode-kp-7)
+			  (format t "keypad 7 pressed~%")
+			  )
+
+			(when (sdl2:scancode= scancode :scancode-kp-8)
+			  (format t "keypad 8 pressed~%")
+			  )
+
+			(when (sdl2:scancode= scancode :scancode-kp-9)
+			  (format t "keypad 9 pressed~%")
+			  )
+			
+			;; (when (sdl2:scancode= scancode :scancode-numlockclear)
+			;;   (format t "numlockclear pressed~%"))
+			
+			(when (sdl2:scancode= scancode :scancode-f1)
+			  (format t "f1 pressed~%"))
+			(when (sdl2:scancode= scancode :scancode-f2)
+			  (format t "f2 pressed~%"))
+			(when (sdl2:scancode= scancode :scancode-f3)
+			  (format t "f3 pressed~%"))
+			(when (sdl2:scancode= scancode :scancode-f4)
+			  (format t "f4 pressed~%"))
+			(when (sdl2:scancode= scancode :scancode-f5)
+			  (format t "f5 pressed~%"))
+			(when (sdl2:scancode= scancode :scancode-f6)
+			  (format t "f6 pressed~%"))
+			(when (sdl2:scancode= scancode :scancode-f7)
+			  (format t "f7 pressed~%"))
+			(when (sdl2:scancode= scancode :scancode-f8)
+			  (format t "f8 pressed~%"))
+			(when (sdl2:scancode= scancode :scancode-f9)
+			  (format t "f9 pressed~%"))
+			(when (sdl2:scancode= scancode :scancode-f10)
+			  (format t "f10 pressed~%"))
+			(when (sdl2:scancode= scancode :scancode-f11)
+			  (format t "f11 pressed~%"))
+			(when (sdl2:scancode= scancode :scancode-f12)
+			  (format t "f12 pressed~%"))
+
+			(when (sdl2:scancode= scancode :scancode-kp-period)
+			  (format t "keypad period pressed~%"))
+
+			(when (sdl2:scancode= scancode :scancode-insert)
+			  (format t "insert pressed~%"))
+
+			(when (sdl2:scancode= scancode :scancode-home)
+			  (format t "home pressed~%"))
+
+			(when (sdl2:scancode= scancode :scancode-pageup)
+			  (format t "pageup pressed~%"))
+			
+			(when (sdl2:scancode= scancode :scancode-pagedown)
+			  (format t "pagedown pressed~%"))
+
+			(when (sdl2:scancode= scancode :scancode-end)
+			  (format t "end pressed~%"))
+
+			(when (sdl2:scancode= scancode :scancode-delete)
+			  (format t "delete pressed~%"))
 			
 			
-                        (format t "Key sym: ~a, code: ~a, mod: ~a~%"
+			(when (sdl2:scancode= scancode :scancode-return)
+			  "maybe insert a newline?"
+                           (cheap-scancode-body #\return))
+			
+                        (format t "Key sym: ~a, code: ~a, mod: ~a, keyword: ~a~%"
                                 sym
                                 scancode
-                                mod-value)
-			(format t "left shift key pressed => ~a~%" (logand #x1 mod-value))
-			(format t "right shift key pressed => ~a~%" (logand #x2 mod-value))
-			(format t "any shift key (left or right) key pressed => ~a~%" (logand (logior #x1 #x2) mod-value))
+                                mod-value
+				(sdl2:scancode-symbol scancode)
+				)
+			
+			;; (format t "left shift key pressed => ~a~%" (logand #x1 mod-value))
+			;; (format t "right shift key pressed => ~a~%" (logand #x2 mod-value))
+			;; (format t "any shift key (left or right) key pressed => ~a~%" (logand (logior #x1 #x2) mod-value))
 
-			(format t "left control key pressed => ~a~%" (logand #x40 mod-value))
-			(format t "right control key pressed => ~a~%" (logand #x80 mod-value))
-			(format t "any control key (left or right) pressed => ~a~%" (logand (logior #x40 #x80) mod-value))
+			;; (format t "left control key pressed => ~a~%" (logand #x40 mod-value))
+			;; (format t "right control key pressed => ~a~%" (logand #x80 mod-value))
+			;; (format t "any control key (left or right) pressed => ~a~%" (logand (logior #x40 #x80) mod-value))
 
 		   (cond
-		   ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-left)
-		    (format t "user pressed left arrow key!~%")
+		   ((sdl2:scancode= scancode :scancode-left)
+		    ;;(format t "user pressed left arrow key!~%")
 		    (backward-char buf))
-		   ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-right)
-		    (format t "user pressed right arrow key!~%")
+		   ((sdl2:scancode= scancode :scancode-right)
+		    ;;(format t "user pressed right arrow key!~%")
 		    (forward-char buf))
-		   ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-backspace)
+		   ((sdl2:scancode= scancode :scancode-backspace)
 		    (backspace-delete buf)
-		    (format t "user pressed backspace key~%")
+		    ;;(format t "user pressed backspace key~%")
 		    (update-text)
 		    )
-		   ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-delete)
-		    (format t "user pressed delete key~%")
+		   ((sdl2:scancode= scancode :scancode-delete)
+		    ;;(format t "user pressed delete key~%")
 		    (delete-delete buf)
 		    (update-text))
 
-		   ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-space)
-		    (format t "user pressed space key~%")
+		   ((sdl2:scancode= scancode :scancode-space)
+		    ;;(format t "user pressed space key~%")
 		    (insert buf #\space)
 		    (update-text))
 
-		   ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-escape)
+		   ((sdl2:scancode= scancode :scancode-escape)
 		    (sdl2:push-event :quit))
 		   
-		   ;; ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-a)
+		   ;; ((sdl2:scancode= scancode :scancode-a)
 		   ;;  (insert buf #\a)
 		   ;;  (format t "user pressed letter a key!~%")
 		   ;;  (update-text))
 			)))
 			  
 			
-		(:keyup	 (:keysym keysym)
+		    (:keyup
+		     (:keysym keysym)
+		     ;; useful scancode 
+		     (let ((scancode (sdl2:scancode-value keysym))
+                           (sym (sdl2:sym-value keysym))
+                           (mod-value (sdl2:mod-value keysym)))
+                      
 		 (cond
-		   ((sdl2:scancode= (sdl2:scancode-value keysym) :scancode-escape)
+		   ((sdl2:scancode= scancode :scancode-escape)
 		    (sdl2:push-event :quit))
-		   (t nil)));;keyup
+		   (t nil))))
 		(:idle ()
                        (clear-renderer my-render)
 		       (when (> buf-len 0)		      
@@ -295,7 +573,7 @@
 ;; 	    (when (plusp (logand mods (sdl2:+kmod-rctrl+)))
 ;; 	      (format t "Right ctrl is held~%"))
 ;; 	    ;; Example: check for Ctrl + A
-;; 	    (when (and (sdl2:scancode= (sdl2:scancode-value keysym) :scancode-a)
+;; 	    (when (and (sdl2:scancode= scancode :scancode-a)
 ;; 		       (plusp (logand mods (logior (sdl2:+kmod-lctrl+)
 ;; 						   (sdl2:+kmod-rctrl+)))))
 ;; 	      (format t "CTRL+A detected!~%"))))	      

@@ -82,6 +82,21 @@ change key repeat rate to insane speeds if we just change the two numbers , holy
 xset r rate 150 30
 ```
 
+## sdl2 sbcl main thread
+
+there is a recommendation to make the gui the main thread   ,,,  perhaps background thread may sleep 
+
+```lisp
+(defun run ()
+  (sdl2:make-this-thread-main #'basic-example))
+```
+
+## sdl2 font
+
+uppercase and lowercase in some fonts are exactly identical, which is helpful.
+
+
+
 ## key combinations
 
 accurate control of keyboard whatever sdl2 or however gui implemented is paramount to a good editor experience
