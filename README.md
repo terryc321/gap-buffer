@@ -25,6 +25,22 @@ lets be able to create an array of some arbitrary positive size with two markers
 	    :to (- len 1)))
 ```
 
+## buffer-contents
+
+A quick and dirty way to get a string representation of the buffer itself
+
+```lisp
+(defun buffer-contents (buf) 
+  (let ((str "")
+	(arr (buf-vec buf)))
+    (loop for i from 0 to (- (length arr) 1) do
+      (let ((ch (aref arr i)))
+      (when (not (null ch))
+	(setq str (concatenate 'string str (format nil "~a" ch))))))
+    str))
+```
+
+
 ## insert character
 
 lets now look at inserting a character into a the gap buffer.  two cases . 
@@ -52,6 +68,7 @@ lets now look at inserting a character into a the gap buffer.  two cases .
 ### expand-gap-buffer
 
 here we enlarge the gap buffer.  for simplicity we will just double the size of the array container itself.   
+we only expand no insertion of characters here.
 
 - double size array container
 - copy all live chars on left of old gap buffer over to new array
@@ -94,8 +111,33 @@ here we enlarge the gap buffer.  for simplicity we will just double the size of 
       t)))
 ```
 
+# backspace delete
 
+deletes the chracter before the caret.  repeatedly smashing the backspace key when already at start of document will do nothing.
 
+move gap buffer left if possible , if gap buffer `from` is already at 0 then keep it at 0 . 
+write `nil` making start of gap buffer a non character item.
+
+```lisp
+(defun backspace-delete (buf)
+  (setf (buf-from buf) (max 0 (+ -1 (buf-from buf))))
+  (setf (aref (buf-vec buf) (buf-from buf)) nil))
+```
+
+# delete delete
+
+like a forward delete , deletes that character ahead of caret.  
+
+this character to be deleted will be at far right end of the gap buffer.  we can increase gap buffer upto limit of `LEN-1` of container array. again we can write a `nil` into the slot taken over by end of the gap buffer.
+
+repeatedly smashing the del key when already at end of document will do nothing.
+
+```lisp
+(defun delete-delete (buf)
+  (setf (buf-to buf) (min (+ -1 (length (buf-vec buf)))
+			  (+ 1 (buf-to buf))))
+  (setf (aref (buf-vec buf) (buf-to buf)) nil))
+```
 
 
 

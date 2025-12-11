@@ -91,14 +91,26 @@
 	(setq str (concatenate 'string str (format nil "~a" ch))))))
     str))
 
+
+(defun backspace-delete (buf)
+  (setf (buf-from buf) (max 0 (+ -1 (buf-from buf))))
+  (setf (aref (buf-vec buf) (buf-from buf)) nil))
+
+(defun delete-delete (buf)
+  (setf (buf-to buf) (min (+ -1 (length (buf-vec buf)))
+			  (+ 1 (buf-to buf))))
+  (setf (aref (buf-vec buf) (buf-to buf)) nil))
+
+
+
 ;; (defun remov (buf)
 ;;   t)
 
 ;; (defun forward (buf)
 ;;   t)
 
-(defun backward (buf)
-   t)
+;; (defun backward (buf)
+;;    t)
 
 ;; (defun up(buf)
 ;;   t)
