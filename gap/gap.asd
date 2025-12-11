@@ -7,8 +7,10 @@
   :version "0.0.1"
   :serial t
   :depends-on (#:uiop #:fiveam #:sdl2 #:sdl2-ttf #:alexandria)
-  :components ((:file "package")
-               (:file "gap")))
+  :components ((:file "package") ;; package.lisp
+               (:file "gap") ;; gap.lisp
+	       (:file "sdl2/sdl2") ;; sdl2/sdl2.lisp
+	       ))
 
 
 ;; (ql:quickload "uiop") ;; directory stuff
