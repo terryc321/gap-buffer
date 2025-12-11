@@ -208,7 +208,17 @@
                         (cond
                           ((sdl2:scancode= scancode :scancode-w) (format t "~a~%" "WALK"))
                           ((sdl2:scancode= scancode :scancode-s) (sdl2:show-cursor))
-                          ((sdl2:scancode= scancode :scancode-h) (sdl2:hide-cursor)))
+                          ((sdl2:scancode= scancode :scancode-h) (sdl2:hide-cursor))
+			  ((cheap-scancode-head #\a)
+			   (cond
+			     ((zerop (logand (logior #x1 #x2) mod-value))
+			      ;; no shift key pressed
+			      (cheap-scancode-body #\a))
+			     (t ;; shift key pressed
+			      (cheap-scancode-body #\A))))
+			  
+			)
+			
 			
                         (format t "Key sym: ~a, code: ~a, mod: ~a~%"
                                 sym
@@ -270,6 +280,11 @@
 			 (sdl2:destroy-texture hello-text)
 			 (sdl2-ttf:quit))
                        t)))))))))
+
+
+;; to step around bordeaux-threads pain points
+(defun run ()
+  (sdl2:make-this-thread-main #'basic-example))
 
 
 ;; ai slop -- 

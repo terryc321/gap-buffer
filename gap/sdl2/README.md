@@ -74,12 +74,13 @@ we can now check if the `left control key` is pressed or not
 ```
 
 
-
-
 ## key repeat
 
-waits for a key up down means does not do a key repeat , so have to tweak that , 
-determine
+change key repeat rate to insane speeds if we just change the two numbers , holy knows what they do
+
+```bash
+xset r rate 150 30
+```
 
 ## key combinations
 
