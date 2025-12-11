@@ -79,7 +79,11 @@ we can now check if the `left control key` is pressed or not
 change key repeat rate to insane speeds if we just change the two numbers , holy knows what they do
 
 ```bash
-xset r rate 150 30
+> xset r rate 150 30
+
+> bash ~/fix-keyboard.sh 
+so [{ }] actually ( ) for easier typing
+
 ```
 
 ## sdl2 sbcl main thread
@@ -95,7 +99,12 @@ there is a recommendation to make the gui the main thread   ,,,  perhaps backgro
 
 uppercase and lowercase in some fonts are exactly identical, which is helpful.
 
+## sdl2 text 
 
+what is the best way to display text quickly
+
+## sdl caret 
+be nice to have a visual representation of the cursor 
 
 ## key combinations
 

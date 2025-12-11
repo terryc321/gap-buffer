@@ -181,18 +181,25 @@
 		 ;; we only render to screen if buffer-contents is non zero length 
 		 (setq hello-text (let* ((surface (sdl2-ttf:render-text-solid font
 									      buf-str
-									      255 ;; red
-									      0   ;; green
-									      0   ;; blue
+									      255  ;; red
+									      255  ;; green
+									      255  ;; blue
 									      0))
 					 (texture (sdl2:create-texture-from-surface my-render
 										    surface)))
 				    (sdl2:free-surface surface)
 				    texture))
-		 (setq dest-rect (sdl2:make-rect (round (- 150 (/ (sdl2:texture-width hello-text) 2.0)))
-						 (round (- 150 (/ (sdl2:texture-height hello-text) 2.0)))
+		 ;; where the hello-text is going to be written
+		 ;; (setq dest-rect (sdl2:make-rect (round (- 150 (/ (sdl2:texture-width hello-text) 2.0)))
+		 ;; 				 (round (- 150 (/ (sdl2:texture-height hello-text) 2.0)))
+		 ;; 				 (sdl2:texture-width hello-text)
+		 ;; 				 (sdl2:texture-height hello-text)))
+		 (setq dest-rect (sdl2:make-rect sdl2-ffi:+null+
+						 sdl2-ffi:+null+
 						 (sdl2:texture-width hello-text)
-						 (sdl2:texture-height hello-text))))))
+						 (sdl2:texture-height hello-text)))
+		 
+		 )))
       
       (sdl2:with-init (:everything)
 	;;Technically speaking sdl2-ttf can be initialized without sdl2 
@@ -202,7 +209,8 @@
 	    (setq my-render my-renderer)
 
 	    ;;(setq font (sdl2-ttf:open-font (asdf:system-relative-pathname 'sdl2-ttf-examples "examples/PROBE_10PX_OTF.otf") 20))
-	    (setq font (sdl2-ttf:open-font "/usr/share/fonts/fonts-go/Go-Mono.ttf" 20))
+	    ;;(setq font (sdl2-ttf:open-font "/usr/share/fonts/fonts-go/Go-Mono.ttf" 20))
+	    (setq font (sdl2-ttf:open-font "/usr/share/fonts/truetype/jetbrains-mono/fonts/ttf/JetBrainsMono-Regular.ttf" 20))
 	    (update-text)	  
             (flet ((text-renderer (renderer)
                      (sdl2:render-copy renderer
@@ -210,7 +218,8 @@
                                        :source-rect (cffi:null-pointer)
                                        :dest-rect dest-rect))
                    (clear-renderer (renderer)
-                     (sdl2:set-render-draw-color renderer 0 0 0 255)
+		     ;; background colour in red green blue
+                     (sdl2:set-render-draw-color renderer 0 50 50 255)
                      (sdl2:render-clear renderer)))
               (sdl2:with-event-loop (:method :poll)
 	            (:keydown (:keysym keysym)
