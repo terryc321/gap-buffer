@@ -28,67 +28,74 @@
   to
   )
 
-(defun make-buffer ()
-  (make-buf :vec (make-array 10 :initial-element nil) :from 3 :to 4))
-
-;; is buffer empty? - no 
-(defun insert-no-expand(buf ch)
-  (format t "buffer before => ~a ~%" buf)
-  (setf (aref (buf-vec buf) (buf-from buf)) ch)
-  (incf (buf-from buf))
-  (format t "buffer now => ~a ~%" buf))
-
-#|
-
-0 1 2 3 4 5 6 7 8 9
-a b c 
-
-|#
-
-;; copies all string - then sets to/from indexes after word - always inserts at end of text !?!
-(defun insert-with-expand(buf ch)
-  (format t "EXPANDING~%")
-  (let* ((newsize (+ 1 (length (buf-vec buf))))
-	 (j 0)
-	 (tmp (make-buf :vec (make-array newsize :initial-element nil) :from 0 :to 0)))
-    (loop for i from 0 to (+ -1 (length (buf-vec buf))) do
-      (let ((ch (aref (buf-vec buf) i)))
-	(when (not (null ch))
-	  (format t "copying char ~a from ~a -> ~a ~%" ch i i)
-	  (setf (aref (buf-vec tmp) j) ch)
-	  (incf j))))
-    ;; assign vectors 
-    (setf (buf-vec buf) (buf-vec tmp))
-    ;;
-    (format t "inserting char ~a at ~a " ch j)
-    (setf (aref (buf-vec tmp) j) ch)
-    (setf (buf-from buf) (+ j 1))
-    (setf (buf-to buf) (+ -1 newsize))
-    ;;
-    (format t "buffer contents {~A} ~%" (buffer-contents buf))
-    ))
-
-
-
+(defun make-buffer (len)
+  (assert (>= len 10))
+  (make-buf :vec (make-array len :initial-element nil)
+	    :from 0
+	    :to (- len 1)))
 
 
 (defun insert(buf ch)
   (cond
-    ((< (buf-from buf) (buf-to buf))
+    ((>= (buf-from buf) (buf-to buf))
+     (expand-gap-buffer buf)
      (insert-no-expand buf ch))
-    (t
-     (insert-with-expand buf ch))))
+    (t  (insert-no-expand buf ch))))
+
+
+(defun insert-no-expand(buf ch)  
+  (setf (aref (buf-vec buf) (buf-from buf)) ch)
+  (incf (buf-from buf)))
+
+
+(defun expand-gap-buffer(buf)  
+  (let* ((newsize (* 2 (length (buf-vec buf))))
+	 (tmp (make-buffer newsize)))
+    ;; copy live chars across
+    (let ((j 0))
+      (loop for i from 0 to (+ -1 (length (buf-vec buf))) do
+	(let ((ch (aref (buf-vec buf) i)))
+	  (when (not (null ch))
+	    (setf (aref (buf-vec tmp) j) ch)
+	    (incf j))))
+      (setf (buf-from tmp) j)
+      (setf (buf-to tmp) (+ -1 (length (buf-vec tmp))))
+      ;; original gap buffer location ? now at j
+      
+      
+    t))
+
+    
+    ;; (loop for i from 0 to (+ -1 (length (buf-vec buf))) do
+    ;;   (let ((ch (aref (buf-vec buf) i)))
+    ;; 	(when (not (null ch))
+    ;; 	  (format t "copying char ~a from ~a -> ~a ~%" ch i i)
+    ;; 	  (setf (aref (buf-vec tmp) j) ch)
+    ;; 	  (incf j))))
+    ;; ;; assign vectors 
+    ;; (setf (buf-vec buf) (buf-vec tmp))
+    ;; ;;
+    ;; (format t "inserting char ~a at ~a " ch j)
+    ;; (setf (aref (buf-vec tmp) j) ch)
+    ;; (setf (buf-from buf) (+ j 1))
+    ;; (setf (buf-to buf) (+ -1 newsize))
+    ;; ;;
+    ;; (format t "buffer contents {~A} ~%" (buffer-contents buf))
+    ;; ))
+
+
     
 
 ;; nil means no character stored there
-(defun buffer-contents (buf)
-  (let ((str "")
-	(arr (buf-vec buf)))
-    (loop for i from 0 to (- (length arr) 1) do
-      (let ((ch (aref arr i)))
-      (when (not (null ch))
-	(setq str (concatenate 'string str (format nil "~a" ch))))))
-    str))
+(defun buffer-contents (buf) "")
+
+  ;; (let ((str "")
+  ;; 	(arr (buf-vec buf)))
+  ;;   (loop for i from 0 to (- (length arr) 1) do
+  ;;     (let ((ch (aref arr i)))
+  ;;     (when (not (null ch))
+  ;; 	(setq str (concatenate 'string str (format nil "~a" ch))))))
+  ;;   str))
 
 (defun remov (buf)
   t)
