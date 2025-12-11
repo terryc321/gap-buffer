@@ -28,7 +28,7 @@
   to
   )
 
-(defun make-buffer (len)
+(defun make-buffer (&optional (len 10))
   (assert (>= len 10))
   (make-buf :vec (make-array len :initial-element nil)
 	    :from 0
@@ -64,7 +64,7 @@
 	  (let ((ch (aref (buf-vec buf) n)))
 	    (when (not (null ch))
 	      (setf (aref (buf-vec tmp) k) ch)
-	      (decf k)))))      
+	      (decf k))))      
       ;; set gap buffer markers at end of tmp array
       (setf (buf-from tmp) (buf-from buf))
       (setf (buf-to tmp) k)
@@ -79,57 +79,60 @@
       (setf (buf-from buf) (buf-from tmp))
       (setf (buf-to buf) (buf-to tmp))
       (setf (buf-vec buf) (buf-vec tmp))
-      t)))
+      t))))
 
     
+(defun buffer-contents (buf) 
+  (let ((str "")
+	(arr (buf-vec buf)))
+    (loop for i from 0 to (- (length arr) 1) do
+      (let ((ch (aref arr i)))
+      (when (not (null ch))
+	(setq str (concatenate 'string str (format nil "~a" ch))))))
+    str))
 
-    
+;; (defun remov (buf)
+;;   t)
 
-;; nil means no character stored there
-(defun buffer-contents (buf) "")
-
-  ;; (let ((str "")
-  ;; 	(arr (buf-vec buf)))
-  ;;   (loop for i from 0 to (- (length arr) 1) do
-  ;;     (let ((ch (aref arr i)))
-  ;;     (when (not (null ch))
-  ;; 	(setq str (concatenate 'string str (format nil "~a" ch))))))
-  ;;   str))
-
-(defun remov (buf)
-  t)
-
-(defun forward (buf)
-  t)
+;; (defun forward (buf)
+;;   t)
 
 (defun backward (buf)
-  t)
+   t)
 
-(defun up(buf)
-  t)
+;; (defun up(buf)
+;;   t)
 
-(defun down (buf)
-  t)
+;; (defun down (buf)
+;;   t)
 
 
 
 (tt:def-suite suite-insert)
 (tt:in-suite suite-insert)
+
+(tt:test insert-nothing
+  (let ((buf (make-buffer)))
+    (tt:is (equalp "" (buffer-contents buf)))))
+
 (tt:test insert-a
   (let ((buf (make-buffer)))
     (insert buf #\a)
     (tt:is (equalp "a" (buffer-contents buf)))))
+
 (tt:test insert-ab
   (let ((buf (make-buffer)))
     (insert buf #\a)
     (insert buf #\b)    
     (tt:is (equalp "ab" (buffer-contents buf)))))
+
 (tt:test insert-abc
   (let ((buf (make-buffer)))
     (insert buf #\a)
     (insert buf #\b)
     (insert buf #\c)    
     (tt:is (equalp "abc" (buffer-contents buf)))))
+
 (tt:test insert-abc
   (let ((buf (make-buffer)))
     (insert buf #\a)
@@ -142,19 +145,14 @@
     (insert buf #\h)
     (insert buf #\i)    
     (tt:is (equalp "abcdefghi" (buffer-contents buf)))))
+
 (tt:test insert-n1
   (let ((buf (make-buffer)))
-    (insert buf 1)
-    (insert buf 2)
-    (insert buf 3)    
-    (insert buf 4)
-    (insert buf 5)
-    (insert buf 6)    
-    (insert buf 7)
-    (insert buf 8)
-    (insert buf 9)    
-    (tt:is (equalp "123456789" (buffer-contents buf)))))
-
+    (let ((str ""))
+      (loop for i from 1 to 100 do 
+	(insert buf #\a)
+	(setq str (concatenate 'string str "a")))      
+    (tt:is (equalp str (buffer-contents buf))))))
 
 (defun run-tests ()
   (tt:run!))

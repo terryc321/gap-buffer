@@ -70,11 +70,11 @@ a ^------------------^
 here we enlarge the gap buffer.  for simplicity we will just double the size of the array container itself.   
 
 - double size array container
-- copy all live chars over to new array container
-- figure out where gap buffer is to go and how long it is
-- copy live chars to end of gap buffer
-- nullify gap buffer contents
-
+- copy all live chars on left of old gap buffer over to new array
+- copy all live chars on right of old gap buffer over to new array
+- set new limits of tmp gap buffer
+- nullify tmp gap buffer contents
+- take over old buffer structure itself
 
 ```lisp
 
@@ -110,27 +110,8 @@ here we enlarge the gap buffer.  for simplicity we will just double the size of 
       t)))
 ```
 
-we copy any non nil characters across in order . place gap buffer at end to end of array , keeping in mind off by one error on end is `LEN-1` . 
-then compute where the gap buffer should `sit` by 
 
-```ascii
-0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 ... (LEN-1)
-a s d f ^-----------------------------------------^  f  o  o  b  a  r
-^-- start of file                                                   ^--- end of file
 
-array initially nil elements , any non nil elements are considered part of final 'file' contents.
-there is no end of file marker as such yet.
-
-```
-
-we cannot base the new gap buffer on previous size since previous size will be close to some small value likely one or zero, depending on constraints.
-
-```lisp
-(defun expand-gap-buffer(buf)  
-  (let* ((newsize 10)
-	 (tmp (make-buffer newsize)))
-    tmp))
-```
 
 
 
