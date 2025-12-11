@@ -28,8 +28,8 @@
   to
   )
 
-(defun make-buffer (&optional (len 10))
-  (assert (>= len 10))
+(defun make-buffer (&optional (len 3))
+  (assert (> len 2))
   (make-buf :vec (make-array len :initial-element nil)
 	    :from 0
 	    :to (- len 1)))
@@ -48,9 +48,11 @@
   (incf (buf-from buf)))
 
 
-(defun expand-gap-buffer(buf)  
+(defun expand-gap-buffer(buf)
   (let* ((newsize (* 2 (length (buf-vec buf))))
 	 (tmp (make-buffer newsize)))
+    ;; debug 
+    ;;(format t "EXPANDING from ~a to ~a ~%" (length (buf-vec buf)) (length (buf-vec tmp)))
     ;; copy chars between (zero) to (old-gap-buffer-start - 1) across
     (let ((j 0))
       (loop for i from 0 to (+ -1 (buf-from buf)) do
@@ -100,6 +102,30 @@
   (setf (buf-to buf) (min (+ -1 (length (buf-vec buf)))
 			  (+ 1 (buf-to buf))))
   (setf (aref (buf-vec buf) (buf-to buf)) nil))
+
+(defun forward-char (buf)
+  (let ((to (buf-to buf)))
+    (setf (buf-to buf) (min (+ -1 (length (buf-vec buf)))
+			    (+ 1 (buf-to buf))))
+    (when (> (buf-to buf) to)
+      (setf (aref (buf-vec buf) (buf-from buf)) (aref (buf-vec buf) (buf-to buf)))
+      (setf (aref (buf-vec buf) (buf-to buf)) nil)
+      (incf (buf-from buf)))))
+ 
+
+(defun backward-char (buf)
+  (let ((from (buf-from buf)))
+    (setf (buf-from buf) (max 0 
+			    (+ -1 (buf-from buf))))
+    (when (< (buf-from buf) from)
+      ;; gap.from has moved left
+      ;; buf-from now sits on a character
+      ;; copy char gap.from -> gap.to
+      (setf (aref (buf-vec buf) (buf-to buf)) (aref (buf-vec buf) (buf-from buf)))
+      ;; nullify gap buffer 
+      (setf (aref (buf-vec buf) (buf-from buf)) nil)
+      ;; move gap.to left
+      (decf (buf-to buf)))))
 
 
 
@@ -165,6 +191,93 @@
 	(insert buf #\a)
 	(setq str (concatenate 'string str "a")))      
     (tt:is (equalp str (buffer-contents buf))))))
+
+(tt:test insert-backspace-1
+  (let ((buf (make-buffer)))
+    (let ((str ""))
+      (loop for i from 1 to 100 do 
+	(insert buf #\a)
+	(setq str (concatenate 'string str "a")))
+      (setq str (subseq str 0 (+ -1 (length str))))
+      (backspace-delete buf)
+    (tt:is (equalp str (buffer-contents buf))))))
+
+(tt:test forward-char-1
+  (let ((buf (make-buffer)))
+    (insert buf #\a)
+    (insert buf #\b)
+    (insert buf #\c)    
+    (insert buf #\d)
+    (insert buf #\e)
+    (insert buf #\f)    
+    (insert buf #\g)
+    (insert buf #\h)
+    (insert buf #\i)    
+    (tt:is (equalp "abcdefghi" (buffer-contents buf)))
+    (forward-char buf)
+    (tt:is (equalp "abcdefghi" (buffer-contents buf)))))
+
+#+nil
+(tt:test forward-char-2
+  (let ((buf (make-buffer)))
+    (insert-string buf "abcdefghi")
+    (tt:is (equalp "abcdefghi" (buffer-contents buf)))
+    (loop for i from 0 to 100 do
+      (forward-char buf))
+    (tt:is (equalp "abcdefghi" (buffer-contents buf)))))
+
+(tt:test backward-char-1
+  (let ((buf (make-buffer)))
+    (insert buf #\a)
+    (insert buf #\b)
+    (insert buf #\c)    
+    (insert buf #\d)
+    (insert buf #\e)
+    (insert buf #\f)    
+    (insert buf #\g)
+    (insert buf #\h)
+    (insert buf #\i)    
+    (tt:is (equalp "abcdefghi" (buffer-contents buf)))
+    (backward-char buf)
+    (tt:is (equalp "abcdefghi" (buffer-contents buf)))))
+
+(tt:test backward-char-2
+  (let ((buf (make-buffer)))
+    (insert buf #\a)
+    (insert buf #\b)
+    (insert buf #\c)    
+    (insert buf #\d)
+    (insert buf #\e)
+    (insert buf #\f)    
+    (insert buf #\g)
+    (insert buf #\h)
+    (insert buf #\i)    
+    (tt:is (equalp "abcdefghi" (buffer-contents buf)))
+    (loop for i from 0 to 100 do
+      (backward-char buf))
+    (tt:is (equalp "abcdefghi" (buffer-contents buf)))))
+
+(tt:test backward-forward-insert-delete-char-1
+  (let ((buf (make-buffer)))
+    (insert buf #\a)
+    (insert buf #\b)
+    (insert buf #\c)    
+    (insert buf #\d)
+    (insert buf #\e)
+    (insert buf #\f)    
+    (insert buf #\g)
+    (insert buf #\h)
+    (insert buf #\i)    
+    (tt:is (equalp "abcdefghi" (buffer-contents buf)))
+    (loop for i from 1 to 100 do
+      (backward-char buf)
+      (loop for j from 1 to 100 do 
+	(insert buf #\a)
+	(backspace-delete buf))
+      (forward-char buf))
+    (tt:is (equalp "abcdefghi" (buffer-contents buf)))))
+
+
 
 (defun run-tests ()
   (tt:run!))

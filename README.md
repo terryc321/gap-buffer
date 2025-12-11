@@ -17,6 +17,8 @@ first approximation we consider a simple byte array to represent text with a gap
 
 lets be able to create an array of some arbitrary positive size with two markers `to` and `from` that represent where the gap buffer starts and ends in the array.
 
+we can even make the default buffer size relatively small , perhaps even as short as 2 bytes long.
+
 ```lisp
 (defun make-buffer (len)
   (assert (>= len 10))
@@ -137,6 +139,110 @@ repeatedly smashing the del key when already at end of document will do nothing.
   (setf (buf-to buf) (min (+ -1 (length (buf-vec buf)))
 			  (+ 1 (buf-to buf))))
   (setf (aref (buf-vec buf) (buf-to buf)) nil))
+```
+
+# forward character
+
+we record current right hand end of gap buffer. try to bump end of gap buffer up . if bump caused end gap buffer to move then we know gap can move to right. 
+- try bump end of gap buffer , if succeeds end is bumped already
+- copy char from end of gap buffer to beginning of gap buffer
+- bump begin of gap buffer
+
+```lisp
+(defun forward-char (buf)
+  (let ((to (buf-to buf)))
+    (setf (buf-to buf) (min (+ -1 (length (buf-vec buf)))
+			    (+ 1 (buf-to buf))))
+    (when (> (buf-to buf) to)
+      (setf (aref (buf-vec buf) (buf-from buf)) (aref (buf-vec buf) (buf-to buf)))
+      (setf (aref (buf-vec buf) (buf-to buf)) nil)
+      (incf (buf-from buf)))))
+```
+
+# backward character
+
+similar to forward character. we try to decrement begin of gap buffer. if succeeds we move character over to end of gap buffer. decrement end of gap buffer
+
+```lisp
+(defun backward-char (buf)
+  (let ((from (buf-from buf)))
+    (setf (buf-from buf) (max 0 
+			    (+ -1 (buf-from buf))))
+    (when (< (buf-from buf) from)
+      ;; gap.from has moved left
+      ;; buf-from now sits on a character
+      ;; copy char gap.from -> gap.to
+      (setf (aref (buf-vec buf) (buf-to buf)) (aref (buf-vec buf) (buf-from buf)))
+      ;; nullify gap buffer 
+      (setf (aref (buf-vec buf) (buf-from buf)) nil)
+      ;; move gap.to left
+      (decf (buf-to buf)))))
+```
+
+
+
+# Tests
+
+```lisp
+(tt:def-suite suite-insert)
+(tt:in-suite suite-insert)
+
+(tt:test insert-nothing
+  (let ((buf (make-buffer)))
+    (tt:is (equalp "" (buffer-contents buf)))))
+
+(tt:test insert-a
+  (let ((buf (make-buffer)))
+    (insert buf #\a)
+    (tt:is (equalp "a" (buffer-contents buf)))))
+
+(tt:test insert-ab
+  (let ((buf (make-buffer)))
+    (insert buf #\a)
+    (insert buf #\b)    
+    (tt:is (equalp "ab" (buffer-contents buf)))))
+
+(tt:test insert-abc
+  (let ((buf (make-buffer)))
+    (insert buf #\a)
+    (insert buf #\b)
+    (insert buf #\c)    
+    (tt:is (equalp "abc" (buffer-contents buf)))))
+
+(tt:test insert-abc
+  (let ((buf (make-buffer)))
+    (insert buf #\a)
+    (insert buf #\b)
+    (insert buf #\c)    
+    (insert buf #\d)
+    (insert buf #\e)
+    (insert buf #\f)    
+    (insert buf #\g)
+    (insert buf #\h)
+    (insert buf #\i)    
+    (tt:is (equalp "abcdefghi" (buffer-contents buf)))))
+
+(tt:test insert-n1
+  (let ((buf (make-buffer)))
+    (let ((str ""))
+      (loop for i from 1 to 100 do 
+	(insert buf #\a)
+	(setq str (concatenate 'string str "a")))      
+    (tt:is (equalp str (buffer-contents buf))))))
+
+(tt:test insert-backspace-1
+  (let ((buf (make-buffer)))
+    (let ((str ""))
+      (loop for i from 1 to 100 do 
+	(insert buf #\a)
+	(setq str (concatenate 'string str "a")))
+      (setq str (subseq str 0 (+ -1 (length str))))
+      (backspace-delete buf)
+    (tt:is (equalp str (buffer-contents buf))))))
+
+
+(defun run-tests ()
+  (tt:run!))
 ```
 
 
