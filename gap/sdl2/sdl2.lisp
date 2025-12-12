@@ -215,11 +215,13 @@ uses *glyph-advance* to keep track of position across screen x direction*"
 	(buf-str nil)
 	(glyph-tex nil) ;; characters in one big texture	
 	(font nil))
-    (insert buf #\t)
-    (insert buf #\e)
-    (insert buf #\r)
-    (insert buf #\r)
-    (insert buf #\y)
+
+    
+    ;; (insert buf #\t)
+    ;; (insert buf #\e)
+    ;; (insert buf #\r)
+    ;; (insert buf #\r)
+    ;; (insert buf #\y)
     
     
       (sdl2:with-init (:everything)

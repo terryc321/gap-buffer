@@ -1,6 +1,20 @@
 
 # gap buffer v0.01
 
+# symbolic link
+
+```bash
+ln -sv ~/code/gap-buffer/gap ~/quicklisp/local-projects/gap
+```
+
+now we can quicklisp quickload 
+
+```
+> sbcl
+> (ql:quickload :gap) ; load gap-buffer
+> (gap::run)
+```
+
 ## gap buffer structure 
 
 first approximation we consider a simple byte array to represent text with a gap buffer somewhere inside.  Initially the buffer is completely empty , there is no content if the buffer were to be saved to a file.

@@ -281,3 +281,27 @@
 (defun run-tests ()
   (tt:run!))
 
+(defun run-forever ()
+  (let ((buf (make-buffer)))  
+    (loop while t do
+	  (insert buf #\a)
+	  (insert buf #\b)
+	  (insert buf #\c)   
+	  (insert buf #\d)
+	  (insert buf #\e)
+	  (insert buf #\f)   
+	  (insert buf #\g)
+	  (insert buf #\h)
+	  (insert buf #\i)
+	  (backspace-delete buf)
+	  (backspace-delete buf)
+	  (backspace-delete buf)
+	  (backspace-delete buf)
+	  (backspace-delete buf)
+	  (backspace-delete buf)
+	  (backspace-delete buf)
+	  (backspace-delete buf)
+	  (backspace-delete buf)
+	  )))
+
+
