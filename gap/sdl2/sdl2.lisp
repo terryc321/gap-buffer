@@ -16,6 +16,11 @@
 (in-package :gap)
 
 
+(defparameter *text-border-x* 0)
+(defparameter *text-border-y* 0)
+(defparameter *chars-fit-on-screen-horz* 50)
+
+
 ;;glyph string derived from all characters from 32 to 126
 ;;(coerce (nreverse (let ((xs nil)) (loop for i from 32 to 126 do (setq xs (cons (code-char i) xs))) xs)) 'string)
 ;; width = 10 height = 22 advance = 10 
@@ -144,33 +149,6 @@ uses *glyph-advance* to keep track of position across screen x direction*"
 	   (sdl2:delay 33))
           (:quit () t))))))
 
-
-
-               ;; (hello-text (let* ((surface (sdl2-ttf:render-text-solid font
-               ;;                                                         "hello world"
-               ;;                                                         255
-               ;;                                                         255
-               ;;                                                         255
-               ;;                                                         0))
-               ;;                    (texture (sdl2:create-texture-from-surface my-renderer
-               ;;                                                               surface)))
-               ;;               (sdl2:free-surface surface)
-               ;;               texture))
-               ;; (destination-rect (sdl2:make-rect (round (- 150 (/ (sdl2:texture-width hello-text) 2.0)))
-	       ;; 					 (round (- 150 (/ (sdl2:texture-height hello-text) 2.0)))
-	       ;; 					 (sdl2:texture-width hello-text)
-	       ;; 					 (sdl2:texture-height hello-text)))
-
-
-;; (defmacro cheap-scancode (ch)
-;;   (let ((sym (intern (string-upcase (format nil "SCANCODE-~a" ch)) "KEYWORD")))
-;;     `((sdl2:scancode= (sdl2:scancode-value keysym) ,sym)
-;;       (insert buf ,ch)
-;;       (format t "user pressed letter ~a key!~%" ,ch)
-;;       (update-text))))
-
-;;(cheap-scancode #\a)
-
 (defmacro cheap-scancode-head (ch)
   (let ((sym (intern (string-upcase (format nil "SCANCODE-~a" ch)) "KEYWORD")))
     `(sdl2:scancode= (sdl2:scancode-value keysym) ,sym)))
@@ -202,15 +180,39 @@ uses *glyph-advance* to keep track of position across screen x direction*"
 ;;                            :dest-rect (sdl2:make-rect :x x :y 50 :w 10 :h 22))))
 
 
+;; Define cursor size - glyph is 10 x 22
+(defparameter *cursor-width* 8)     
+(defparameter *cursor-height* 20)   
+
+(defun draw-cursor (renderer x y)
+  "Draw a filled yellow cursor at position (x, y)."
+  ;; Set drawing color to yellow
+  (sdl2:set-render-draw-color renderer 255 255 0 255)
+  ;; Draw filled rectangle
+  (sdl2:render-fill-rect renderer
+                         (sdl2:make-rect x (+ 4 y)
+                                          (+ 4 (* 2 *cursor-width*))
+                                          (+ 4 (* 2 *cursor-height*)))))
+
+(defun show-glyph-texture (renderer x y texture)
+  ;; show all characters in texture -- ie the whole texture glyph-tex
+  (sdl2:render-copy renderer texture
+                    :source-rect (cffi:null-pointer)
+                    :dest-rect (sdl2:make-rect x
+					       y
+					       (* 2 *glyph-width* (length *glyph-string*))
+					       (* 2 *glyph-height*))))
+
+
+		    
+		     
+
 
 ;; hello-text is a sdl2 texture
 (defun basic-example ()
   (let ((buf (make-buffer))
 	(buf-len 6)
 	(buf-str nil)
-	;;(my-render nil)
-	;;(dest-rect nil)
-	(hello-tex nil)
 	(glyph-tex nil) ;; characters in one big texture	
 	(font nil))
     (insert buf #\t)
@@ -244,26 +246,47 @@ uses *glyph-advance* to keep track of position across screen x direction*"
 		 
 	    ;;(update-text)	  
             (flet ((text-renderer (renderer)
+		     ;; debug
+		     ;;(show-glyph-texture renderer 10 400 glyph-tex)
 
-		     ;; show all characters in texture -- ie the whole texture glyph-tex
-		     (sdl2:render-copy renderer glyph-tex
-                             :source-rect (cffi:null-pointer)
-                             :dest-rect (sdl2:make-rect 50 50
-							(* (+ 1(length *glyph-string*)) (* 2 *glyph-width*))
-							(* 2 *glyph-height*)))
-		     
+		     ;; buffer-contents is a slow operation ?
 		     (let* ((buf-str (buffer-contents buf))
 			    (buf-len (length buf-str))
-			    (x 50)
-			    (y 100))
-		       (loop for i from 0 to (+ -1 buf-len) do
-			 (let ((ch (char buf-str i)))
-			   (sdl2:render-copy renderer glyph-tex
-                             :source-rect (sdl2:make-rect (* 12 (- (char-code ch) 32)) 0 (+ 2 *glyph-width*) (+ 4 *glyph-height*))
-                             :dest-rect (sdl2:make-rect x y
-							(* 2 *glyph-width*)
-							(* 2 *glyph-height*)))
-			   (incf x (* 2 *glyph-advance*))))))
+			    (buf-cursor-i (buf-from buf))
+			    (x *text-border-x*)
+			    (y *text-border-y*))
+		       ;;(format t "cursor at index ~a ~%" buf-cursor-i)
+		       (loop for i from 0 to (max buf-cursor-i buf-len) do
+
+			 ;; aha ! the cursor 
+			 (when (= i buf-cursor-i) 
+			   (draw-cursor renderer x y))
+			 
+			 ;;
+			 (when (and (>= i 0)  (< i buf-len))
+			   (let ((ch (char buf-str i)))
+			     (cond
+			       ((char= ch #\return)
+				(setq x *text-border-x*)
+				(incf y (* 2 *glyph-height*)))
+			       (t
+				 ;; (format t "x = ~a : y = ~a ~%" x y)
+			      	(sdl2:render-copy renderer glyph-tex
+						  :source-rect (sdl2:make-rect (* 12 (- (char-code ch) 32)) 
+									       0 
+									       (+ 2 *glyph-width*) 
+									       (+ 4 *glyph-height*))
+						  :dest-rect (sdl2:make-rect x 
+									     y
+									     (* 2 *glyph-width*) 
+									     (* 2 *glyph-height*)))
+				(incf x (* 2 *glyph-width*))))
+			       ;; 51 wide -- wrap 
+			       (when (> x (* *chars-fit-on-screen-horz* 2 *glyph-width*))
+				 (setq x *text-border-x*)
+				 (incf y (* 2 *glyph-height*)))
+				
+				)))))
 		   ;; 
 		   (clear-renderer (renderer)
 		     ;; background colour in red green blue
@@ -546,12 +569,12 @@ uses *glyph-advance* to keep track of position across screen x direction*"
 			  "maybe insert a newline?"
                            (cheap-scancode-body #\return))
 			
-                        (format t "Key sym: ~a, code: ~a, mod: ~a, keyword: ~a~%"
-                                sym
-                                scancode
-                                mod-value
-				(sdl2:scancode-symbol scancode)
-				)
+                        ;; (format t "Key sym: ~a, code: ~a, mod: ~a, keyword: ~a~%"
+                        ;;         sym
+                        ;;         scancode
+                        ;;         mod-value
+			;; 	(sdl2:scancode-symbol scancode)
+			;; 	)
 			
 			;; (format t "left shift key pressed => ~a~%" (logand #x1 mod-value))
 			;; (format t "right shift key pressed => ~a~%" (logand #x2 mod-value))
@@ -592,20 +615,20 @@ uses *glyph-advance* to keep track of position across screen x direction*"
 		   ;;  (insert buf #\a)
 		   ;;  (format t "user pressed letter a key!~%")
 		   ;;  (update-text))
-			)))
-			  
+			)));; keydown 			  
 			
-		    (:keyup
-		     (:keysym keysym)
-		     ;; useful scancode 
-		     (let ((scancode (sdl2:scancode-value keysym))
-                           (sym (sdl2:sym-value keysym))
-                           (mod-value (sdl2:mod-value keysym)))
+		 ;;    (:keyup
+		 ;;     (:keysym keysym)
+		 ;;     ;; useful scancode 
+		 ;;     (let ((scancode (sdl2:scancode-value keysym))
+                 ;;           (sym (sdl2:sym-value keysym))
+                 ;;           (mod-value (sdl2:mod-value keysym)))
                       
-		 (cond
-		   ((sdl2:scancode= scancode :scancode-escape)
-		    (sdl2:push-event :quit))
-		   (t nil))))
+		 ;; (cond
+		 ;;   ;; ((sdl2:scancode= scancode :scancode-escape)
+		 ;;   ;;  (sdl2:push-event :quit))
+		 ;;   (t nil))))
+		
 		(:idle ()
                        (clear-renderer my-renderer)
 		       (when (> buf-len 0)		      
@@ -614,7 +637,7 @@ uses *glyph-advance* to keep track of position across screen x direction*"
 		(:quit ()
                        (when (> (sdl2-ttf:was-init) 0)
 			 (sdl2-ttf:close-font font)
-			 (sdl2:destroy-texture hello-tex)
+			 (sdl2:destroy-texture glyph-tex)
 			 (sdl2-ttf:quit))
                        t))))))))
 

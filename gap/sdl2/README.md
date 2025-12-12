@@ -1,5 +1,7 @@
 # SDL2 
 
+instability could come from using emacs + slime + sdl !! wowserss ....
+
 common lisp sdl2 is installed where
 
 ```lisp
@@ -345,6 +347,10 @@ can we use a window manager that simply does not reference
 # colorised display
 
 colourisor using seperate threads 
+
+# code needs a clean up
+
+# can we draw a filled yellow box to represent the caret cursor ?
 
 
 
