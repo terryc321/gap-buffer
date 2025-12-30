@@ -277,9 +277,9 @@
     (tt:is (equalp "abcdefghi" (buffer-contents buf)))))
 
 
-
+;; run the suite insert tests
 (defun run-tests ()
-  (tt:run!))
+  (tt:run! 'suite-insert))
 
 (defun run-forever ()
   (let ((buf (make-buffer)))  
