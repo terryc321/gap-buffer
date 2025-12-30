@@ -209,12 +209,11 @@ uses *glyph-advance* to keep track of position across screen x direction*"
 
 
 ;; hello-text is a sdl2 texture
-(defun basic-example ()
-  (let ((buf (make-buffer))
-	(buf-len 6)
-	(buf-str nil)
-	(glyph-tex nil) ;; characters in one big texture	
-	(font nil))
+(defun basic-example (buf)
+  (let* ((buf-str (buffer-contents buf))
+	 (buf-len (length buf-str))
+	 (glyph-tex nil) ;; characters in one big texture	
+	 (font nil))
 
     
     ;; (insert buf #\t)
@@ -645,8 +644,22 @@ uses *glyph-advance* to keep track of position across screen x direction*"
 
 
 ;; to step around bordeaux-threads pain points
-(defun run ()
-  (sdl2:make-this-thread-main #'basic-example))
+(defun run (&optional (filename ""))
+  (format t "filename => [~a]~%" filename)
+  ;; make a buffer 
+  (let ((buf (make-buffer)))
+    (when (not (equalp filename ""))
+      (with-open-file (stream filename :direction :input)
+	(catch 'done
+	  (loop while t do
+	    (let ((ch (read-char stream nil nil)))
+	      (cond
+		((null ch) (throw 'done t))
+		(t
+		 ;; insert character into buffer
+		 (insert buf ch))))))))
+  ;; do graphical wizardry
+    (sdl2:make-this-thread-main (lambda () (basic-example buf)))))
 
 
 ;; ai slop -- 

@@ -1,6 +1,12 @@
 
 # gap buffer v0.01 project
 
+very rough around edges 
+
+![screenshot](screenshot-2025-12-30_10-02.png)
+
+
+
 Task : Write a text editor
 
 [X] rudimentary gap buffer implemented
