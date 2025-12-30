@@ -3,7 +3,7 @@
 
 very rough around edges 
 
-![screenshot](screenshot-2025-12-30_10-02.png)
+![screenshot](screenshots/screenshot-2025-12-30_10-02.png)
 
 
 
