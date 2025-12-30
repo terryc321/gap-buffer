@@ -267,7 +267,7 @@ uses *glyph-advance* to keep track of position across screen x direction*"
 			 (when (and (>= i 0)  (< i buf-len))
 			   (let ((ch (char buf-str i)))
 			     (cond
-			       ((char= ch #\return)
+			       ((char= ch #\linefeed)
 				(setq x *text-border-x*)
 				(incf y (* 2 *glyph-height*)))
 			       (t
@@ -568,7 +568,9 @@ uses *glyph-advance* to keep track of position across screen x direction*"
 			
 			(when (sdl2:scancode= scancode :scancode-return)
 			  "maybe insert a newline?"
-                           (cheap-scancode-body #\return))
+                          ;; (cheap-scancode-body #\return)
+			  (cheap-scancode-body #\linefeed)
+			  )
 			
                         ;; (format t "Key sym: ~a, code: ~a, mod: ~a, keyword: ~a~%"
                         ;;         sym
@@ -658,6 +660,10 @@ uses *glyph-advance* to keep track of position across screen x direction*"
 		(t
 		 ;; insert character into buffer
 		 (insert buf ch))))))))
+    ;; go to start buffer
+    (loop for i from 0 to (length (buffer-contents buf)) do
+	  (backward-char buf))
+    ;; cursor should be at start of edit window
   ;; do graphical wizardry
     (sdl2:make-this-thread-main (lambda () (basic-example buf)))))
 
